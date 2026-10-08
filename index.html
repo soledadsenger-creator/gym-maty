@@ -1,0 +1,1099 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gym Maty</title>
+<meta name="theme-color" content="#1d2321">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi rutina">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d4561c'/%3E%3Cpath d='M14 26v12M20 22v20M44 22v20M50 26v12M20 32h24' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --ink:#1d2321; --muted:#5f6b66; --line:#d9ddd9; --grid:#e6e9e6;
+  --accent:#d4561c; --accent-dark:#a8410f; --soft:#f7e6dc;
+  --ok:#2f7d4f; --ok-bg:#e1f1e6; --warn:#8a5a00; --warn-bg:#fbefd2; --bad:#b3261e; --bad-bg:#f9dedb;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.wrap{max-width:680px;margin:0 auto;padding-inline:16px;padding-block:16px 64px}
+body.admin .wrap{max-width:1100px}
+h1,h2,h3{font-family:var(--display);font-weight:700;margin:0;text-wrap:balance;line-height:1.05}
+h1{font-size:2rem} h2{font-size:1.5rem} h3{font-size:1.2rem}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;margin-block:14px;border-bottom:2px solid var(--line);overflow-x:auto}
+.tab{font-family:var(--display);font-size:1.15rem;font-weight:600;background:none;border:0;color:var(--muted);padding:8px 12px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--accent)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;width:100%;text-align:left;color:inherit;font:inherit}
+.item:hover{border-color:var(--accent)}
+.item>div{min-width:0}
+.nm{font-weight:600}
+.sub{color:var(--muted);font-size:.88rem}
+.chip{font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.none{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.btn{font:inherit;font-weight:600;font-size:.95rem;border-radius:8px;padding:10px 14px;min-height:44px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted);padding-inline:6px}
+.btn.danger{color:var(--bad)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:.88rem}
+.btn[disabled]{opacity:.5;cursor:default}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;flex:1 1 150px;min-width:0}
+input,textarea,select{font:inherit;font-size:16px;text-transform:none;letter-spacing:0;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+textarea{min-height:90px;resize:vertical}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.sum b{display:block;font-family:var(--display);font-size:2rem;line-height:1;font-variant-numeric:tabular-nums}
+.sum span{font-size:.82rem;color:var(--muted)}
+.sum.bad b{color:var(--bad)} .sum.warn b{color:var(--warn)}
+.gt{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:8px}
+.meta{color:var(--muted);font-size:.9rem}
+.hint{font-size:.86rem;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:28px 12px;border:1px dashed var(--line);border-radius:10px}
+.note{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:.93rem}
+.demo{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;font-size:.9rem;font-weight:500;margin-bottom:12px}
+.backbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;font-size:.92rem;z-index:50;max-width:90vw}
+details summary{cursor:pointer;font-weight:600}
+pre.msg{white-space:pre-wrap;font-family:var(--body);font-size:.95rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;margin:0}
+.two{display:grid;gap:12px}
+@media (min-width:900px){ body.admin .two{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start} }
+
+/* imágenes de ejercicios: dos posiciones que se alternan */
+.ph{position:relative;width:60px;height:60px;border-radius:8px;overflow:hidden;background:var(--soft);flex:none}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .alt{animation:flip 2.4s steps(1) infinite}
+@keyframes flip{0%{opacity:0}50%{opacity:1}}
+.ph.big{width:100%;height:auto;aspect-ratio:4/3}
+.ph.none{display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:1.3rem;color:var(--accent-dark)}
+.ph.big.none{font-size:2.6rem}
+@media (prefers-reduced-motion:reduce){.ph .alt{animation:none;opacity:0}}
+.maq{width:100%;max-height:320px;object-fit:contain;background:var(--bg);border-radius:10px;display:block}
+.maq-mini{width:60px;height:60px;object-fit:cover;border-radius:8px;flex:none;background:var(--bg)}
+.vid{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000;display:block}
+.badges{display:flex;gap:4px;flex-wrap:wrap}
+.badge{font-size:.72rem;font-weight:600;padding:2px 7px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.badge.on{background:var(--soft);border-color:var(--soft);color:var(--accent-dark)}
+
+.rl{display:flex;gap:10px;align-items:center}
+.rl>div{min-width:0}
+.day{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.day:first-of-type{border-top:0;padding-top:0}
+
+/* editor */
+.it{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--surface)}
+.it-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.it-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+@media (min-width:700px){.it-f{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.it-f label{font-size:.7rem}
+.it-f input{padding:7px 8px}
+.it-ctl{display:flex;flex-direction:column;gap:4px}
+.it-ctl .btn{min-height:34px;padding:4px 10px}
+
+/* selector y biblioteca */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:40;display:flex;flex-direction:column}
+.sheet-head{padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sheet-head .btn.ghost{color:#cfd6d2}
+.sheet-body{flex:1;overflow-y:auto;padding:12px 16px 24px}
+.sheet-in{max-width:1100px;margin:0 auto}
+.sheet-foot{padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.gchip{font:inherit;font-size:.9rem;font-weight:600;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap}
+.gchip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px}
+.pcard{background:var(--surface);border:2px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.pcard[aria-pressed="true"]{border-color:var(--accent)}
+.pcard.off{opacity:.55}
+.pcard .tag{font-size:.8rem;font-weight:600;color:var(--muted)}
+.pcard[aria-pressed="true"] .tag{color:var(--accent)}
+
+/* alumno */
+.al-banner{background:var(--accent);color:#fff;padding:10px 16px;font-weight:600;font-size:.95rem;border-radius:10px}
+.al-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px}
+.al-day{font:inherit;cursor:pointer;padding:8px 6px;min-height:54px;border-radius:10px;background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.al-day[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.al-day b{display:block;font-family:var(--display);font-size:1.15rem}
+.al-day span{display:block;font-size:.78rem}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.ex.hecho{border-color:var(--ok)}
+.ex>.ph.big{border-radius:0}
+.ex-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
+.ex-carga{font-family:var(--display);font-weight:700;font-size:1.35rem;color:var(--accent-dark);font-variant-numeric:tabular-nums;line-height:1.1}
+.ex-desc{font-size:.92rem;color:var(--ink);font-weight:500}
+.ex-nota{font-weight:600;font-size:.95rem}
+.ex-tip{color:var(--muted);font-size:.92rem;white-space:pre-line}
+.ex-num{font-family:var(--display);font-weight:700;color:var(--muted)}
+.hecho-btn{align-self:flex-start}
+.hecho-btn[aria-pressed="true"]{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;background:var(--soft);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:1.6rem;color:var(--accent-dark);flex:none}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.kv div{background:var(--bg);border-radius:8px;padding:8px 10px}
+.kv b{display:block;font-family:var(--display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.kv span{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.chart svg{width:100%;height:auto;display:block}
+.chart .cap{font-size:.86rem;color:var(--muted);min-height:1.3em}
+table.regs{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+table.regs th,table.regs td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.regs th:first-child,table.regs td:first-child{text-align:left}
+table.regs th{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tablewrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty">Cargando…</div></div>
+<div id="sheet" class="sheet" hidden></div>
+<div id="toast" class="toast" hidden></div>
+<input type="file" id="fileIn" accept="image/*" hidden>
+
+<script>
+/* =========================================================
+   CONFIGURACIÓN — lo único que hay que completar
+   ========================================================= */
+// 1) Pegar acá el bloque "firebaseConfig" que da Firebase. Mientras quede en null, la app funciona en MODO DEMO (datos solo en este navegador).
+const firebaseConfig = {
+  apiKey: "AIzaSyAIm2MIq7iSyznupO7nBqCvagsGnA2MVnY",
+  authDomain: "gym-maty.firebaseapp.com",
+  projectId: "gym-maty",
+  storageBucket: "gym-maty.firebasestorage.app",
+  messagingSenderId: "405050067788",
+  appId: "1:405050067788:web:78c0bef26b73f25baf9de9"
+};
+// 2) Mails (cuentas de Google) que pueden entrar como profe. Tienen que ser los mismos que en las reglas de Firestore.
+const ADMINS = ['matias.candaosa@gmail.com', 'sengersa@gmail.com'];
+// 3) Cómo firma los mensajes y cómo se llama el gimnasio.
+const PROFE = 'Maty';
+const GIMNASIO = 'Gym';
+
+/* ========================================================= */
+const EJERCICIOS = [{"nombre":"Sentadilla con barra","grupo":"Piernas","img":"Barbell_Squat","tip":"Espalda recta y pecho arriba. Bajá hasta que el muslo quede paralelo al piso."},{"nombre":"Sentadilla goblet","grupo":"Piernas","img":"Goblet_Squat","tip":"La pesa pegada al pecho, codos adentro de las rodillas."},{"nombre":"Sentadilla frontal","grupo":"Piernas","img":"Front_Barbell_Squat","tip":"Codos altos y torso lo más vertical posible."},{"nombre":"Prensa de piernas","grupo":"Piernas","img":"Leg_Press","tip":"No despegues la cadera del asiento ni trabes las rodillas arriba."},{"nombre":"Estocada con mancuernas","grupo":"Piernas","img":"Dumbbell_Lunges","tip":"La rodilla de adelante no pasa la punta del pie."},{"nombre":"Estocada caminando","grupo":"Piernas","img":"Bodyweight_Walking_Lunge","tip":"Paso largo, torso derecho, bajá controlado."},{"nombre":"Sentadilla búlgara","grupo":"Piernas","img":"Split_Squat_with_Dumbbells","tip":"El peso en la pierna de adelante; la de atrás solo apoya."},{"nombre":"Subida al cajón","grupo":"Piernas","img":"Step-up_with_Knee_Raise","tip":"Empujá con el talón de la pierna que sube."},{"nombre":"Sillón de cuádriceps","grupo":"Piernas","img":"Leg_Extensions","tip":"Subí controlado y apretá arriba un segundo."},{"nombre":"Camilla de isquiotibiales","grupo":"Piernas","img":"Lying_Leg_Curls","tip":"La cadera pegada al banco, sin balancearte."},{"nombre":"Femoral sentado","grupo":"Piernas","img":"Seated_Leg_Curl","tip":"Bajá lento, sin soltar el peso de golpe."},{"nombre":"Gemelos de pie","grupo":"Piernas","img":"Rocking_Standing_Calf_Raise","tip":"Subí bien en puntas y bajá hasta estirar."},{"nombre":"Gemelos sentado","grupo":"Piernas","img":"Seated_Calf_Raise","tip":"Recorrido completo, pausa arriba."},{"nombre":"Peso muerto","grupo":"Piernas","img":"Barbell_Deadlift","tip":"La barra pegada a las piernas, espalda neutra, empujá con la cadera."},{"nombre":"Peso muerto rumano","grupo":"Glúteos","img":"Romanian_Deadlift","tip":"Rodillas apenas flexionadas, llevá la cadera atrás."},{"nombre":"Peso muerto sumo","grupo":"Glúteos","img":"Sumo_Deadlift","tip":"Pies abiertos, rodillas hacia afuera."},{"nombre":"Hip thrust","grupo":"Glúteos","img":"Barbell_Hip_Thrust","tip":"Mentón al pecho y apretá glúteos arriba."},{"nombre":"Puente de glúteos","grupo":"Glúteos","img":"Barbell_Glute_Bridge","tip":"Empujá con los talones, sin arquear la zona lumbar."},{"nombre":"Puente a una pierna","grupo":"Glúteos","img":"Single_Leg_Glute_Bridge","tip":"La cadera nivelada, que no se caiga de un lado."},{"nombre":"Patada de glúteo en polea","grupo":"Glúteos","img":"Glute_Kickback","tip":"Movimiento lento, sin arquear la espalda."},{"nombre":"Press de banca","grupo":"Pecho","img":"Barbell_Bench_Press_-_Medium_Grip","tip":"Bajá la barra controlada hasta el pecho, pies firmes."},{"nombre":"Press inclinado con barra","grupo":"Pecho","img":"Barbell_Incline_Bench_Press_-_Medium_Grip","tip":"Bajá a la parte alta del pecho."},{"nombre":"Press con mancuernas","grupo":"Pecho","img":"Dumbbell_Bench_Press","tip":"Juntá las mancuernas arriba sin chocarlas."},{"nombre":"Press inclinado con mancuernas","grupo":"Pecho","img":"Incline_Dumbbell_Press","tip":"Codos a 45° del cuerpo."},{"nombre":"Aperturas con mancuernas","grupo":"Pecho","img":"Dumbbell_Flyes","tip":"Codos apenas flexionados, abrí hasta sentir el estiramiento."},{"nombre":"Cruce de poleas","grupo":"Pecho","img":"Cable_Crossover","tip":"Juntá las manos adelante apretando el pecho."},{"nombre":"Peck deck","grupo":"Pecho","img":"Butterfly","tip":"Hombros atrás, cerrá controlado."},{"nombre":"Flexiones de brazos","grupo":"Pecho","img":"Pushups","tip":"Cuerpo en línea recta, pecho cerca del piso."},{"nombre":"Fondos en paralelas","grupo":"Pecho","img":"Dips_-_Chest_Version","tip":"Inclinate un poco adelante para trabajar pecho."},{"nombre":"Dominadas","grupo":"Espalda","img":"Pullups","tip":"Subí hasta pasar el mentón por la barra, bajá completo."},{"nombre":"Dominadas asistidas con banda","grupo":"Espalda","img":"Band_Assisted_Pull-Up","tip":"Usá la banda para completar el recorrido."},{"nombre":"Jalón al pecho","grupo":"Espalda","img":"Wide-Grip_Lat_Pulldown","tip":"Llevá la barra al pecho sacando pecho, sin tirar con la espalda."},{"nombre":"Jalón agarre cerrado","grupo":"Espalda","img":"Close-Grip_Front_Lat_Pulldown","tip":"Codos pegados al cuerpo."},{"nombre":"Remo bajo en polea","grupo":"Espalda","img":"Seated_Cable_Rows","tip":"Espalda derecha, llevá los codos atrás."},{"nombre":"Remo con barra","grupo":"Espalda","img":"Bent_Over_Barbell_Row","tip":"Torso inclinado y firme, barra al abdomen."},{"nombre":"Remo con mancuerna","grupo":"Espalda","img":"One-Arm_Dumbbell_Row","tip":"Codo pegado al cuerpo, sin girar el torso."},{"nombre":"Remo en T","grupo":"Espalda","img":"T-Bar_Row_with_Handle","tip":"Pecho arriba, apretá las escápulas."},{"nombre":"Face pull","grupo":"Espalda","img":"Face_Pull","tip":"Tirá hacia la cara abriendo los codos."},{"nombre":"Hiperextensiones","grupo":"Espalda","img":"Hyperextensions_Back_Extensions","tip":"Subí hasta alinear el cuerpo, sin pasarte."},{"nombre":"Press militar","grupo":"Hombros","img":"Standing_Military_Press","tip":"Abdomen firme, sin arquear la espalda."},{"nombre":"Press de hombros con mancuernas","grupo":"Hombros","img":"Dumbbell_Shoulder_Press","tip":"Subí sin trabar los codos arriba."},{"nombre":"Press Arnold","grupo":"Hombros","img":"Arnold_Dumbbell_Press","tip":"Girá las palmas mientras subís."},{"nombre":"Vuelos laterales","grupo":"Hombros","img":"Side_Lateral_Raise","tip":"Subí hasta la altura del hombro, codos apenas flexionados."},{"nombre":"Vuelos frontales","grupo":"Hombros","img":"Front_Dumbbell_Raise","tip":"Subí hasta la altura de los ojos, sin balanceo."},{"nombre":"Pájaros (deltoides posterior)","grupo":"Hombros","img":"Seated_Bent-Over_Rear_Delt_Raise","tip":"Torso inclinado, abrí los brazos hacia los costados."},{"nombre":"Remo al mentón","grupo":"Hombros","img":"Upright_Barbell_Row","tip":"Codos por encima de las manos, sin subir más del pecho."},{"nombre":"Encogimientos de hombros","grupo":"Hombros","img":"Dumbbell_Shrug","tip":"Subí los hombros a las orejas, sin girarlos."},{"nombre":"Curl de bíceps con mancuernas","grupo":"Bíceps","img":"Dumbbell_Bicep_Curl","tip":"Codos quietos al costado del cuerpo."},{"nombre":"Curl con barra","grupo":"Bíceps","img":"Barbell_Curl","tip":"Sin balancear la espalda."},{"nombre":"Curl martillo","grupo":"Bíceps","img":"Hammer_Curls","tip":"Palmas mirándose entre sí."},{"nombre":"Curl predicador","grupo":"Bíceps","img":"Preacher_Curl","tip":"Bajá hasta estirar casi completo el brazo."},{"nombre":"Curl en polea","grupo":"Bíceps","img":"Standing_Biceps_Cable_Curl","tip":"Tensión constante, bajá lento."},{"nombre":"Tríceps en polea","grupo":"Tríceps","img":"Triceps_Pushdown","tip":"Codos pegados al cuerpo, solo se mueve el antebrazo."},{"nombre":"Tríceps con soga","grupo":"Tríceps","img":"Triceps_Pushdown_-_Rope_Attachment","tip":"Abrí la soga abajo."},{"nombre":"Press francés","grupo":"Tríceps","img":"EZ-Bar_Skullcrusher","tip":"Codos fijos apuntando al techo."},{"nombre":"Extensión de tríceps sobre la cabeza","grupo":"Tríceps","img":"Cable_Rope_Overhead_Triceps_Extension","tip":"Codos cerca de la cabeza."},{"nombre":"Fondos en banco","grupo":"Tríceps","img":"Bench_Dips","tip":"Espalda cerca del banco, bajá hasta 90°."},{"nombre":"Press de banca agarre cerrado","grupo":"Tríceps","img":"Close-Grip_Barbell_Bench_Press","tip":"Manos al ancho de hombros, codos pegados."},{"nombre":"Plancha","grupo":"Core","img":"Plank","tip":"Abdomen firme, que la cadera no se caiga."},{"nombre":"Plancha lateral","grupo":"Core","img":"Side_Bridge","tip":"Cuerpo en línea recta de cabeza a pies."},{"nombre":"Abdominales (crunch)","grupo":"Core","img":"Crunches","tip":"Subí despegando solo los hombros, sin tirar del cuello."},{"nombre":"Crunch en polea","grupo":"Core","img":"Cable_Crunch","tip":"Enroscá el torso, la cadera quieta."},{"nombre":"Elevación de piernas colgado","grupo":"Core","img":"Hanging_Leg_Raise","tip":"Sin balancearte, subí controlado."},{"nombre":"Elevación de piernas en banco","grupo":"Core","img":"Flat_Bench_Lying_Leg_Raise","tip":"La zona lumbar apoyada todo el tiempo."},{"nombre":"Giros rusos","grupo":"Core","img":"Russian_Twist","tip":"Girá desde el torso, no solo los brazos."},{"nombre":"Escaladores","grupo":"Core","img":"Mountain_Climbers","tip":"Cadera baja y ritmo constante."},{"nombre":"Dead bug","grupo":"Core","img":"Dead_Bug","tip":"La espalda baja pegada al piso."},{"nombre":"Superman","grupo":"Core","img":"Superman","tip":"Subí brazos y piernas a la vez, sin forzar el cuello."},{"nombre":"Swing con pesa rusa","grupo":"Cardio","img":"One-Arm_Kettlebell_Swings","tip":"El impulso sale de la cadera, no de los brazos."},{"nombre":"Salto al cajón","grupo":"Cardio","img":"Front_Box_Jump","tip":"Caé suave con las rodillas flexionadas."},{"nombre":"Soga","grupo":"Cardio","img":"Rope_Jumping","tip":"Saltos cortos, en la punta de los pies."},{"nombre":"Cinta (correr)","grupo":"Cardio","img":"Running_Treadmill","tip":"Ritmo que te permita hablar entrecortado."},{"nombre":"Bicicleta fija","grupo":"Cardio","img":"Bicycling_Stationary","tip":"Ajustá el asiento a la altura de la cadera."},{"nombre":"Elíptico","grupo":"Cardio","img":"Elliptical_Trainer","tip":"Espalda derecha, sin apoyarte en los brazos."},{"nombre":"Remo ergómetro","grupo":"Cardio","img":"Rowing_Stationary","tip":"Primero piernas, después tronco, al final brazos."},{"nombre":"Caminata del granjero","grupo":"Cardio","img":"Farmers_Walk","tip":"Hombros atrás y pasos firmes."},{"nombre":"Estiramiento de isquiotibiales","grupo":"Movilidad","img":"Hamstring_Stretch","tip":"Mantené 20 a 30 segundos sin rebotar."},{"nombre":"Gato-vaca","grupo":"Movilidad","img":"Cat_Stretch","tip":"Respirá lento acompañando el movimiento."}];
+const GRUPOS = ['Piernas','Glúteos','Pecho','Espalda','Hombros','Bíceps','Tríceps','Core','Cardio','Movilidad','Otros'];
+const SIN_CARGA = ['Cardio','Movilidad'];
+const CAMPOS = [['peso','Peso','kg'],['cintura','Cintura','cm'],['cadera','Cadera','cm'],['pecho','Pecho','cm'],['brazo','Brazo','cm'],['muslo','Muslo','cm']];
+const IMG = (id,n) => `https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/${id}/${n}.jpg`;
+
+const $app = document.getElementById('app');
+const $sheet = document.getElementById('sheet');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone = o => JSON.parse(JSON.stringify(o ?? null));
+const pad2 = n => String(n).padStart(2,'0');
+const isoDia = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const today = () => isoDia(new Date());
+const fmt = iso => { if(!iso) return '—'; const [y,m,d]=iso.slice(0,10).split('-'); return `${d}/${m}/${y}`; };
+const fmtCorto = iso => { if(!iso) return ''; const [,m,d]=iso.slice(0,10).split('-'); return `${d}/${m}`; };
+function addDays(iso,n){ const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoDia(d); }
+function daysBetween(a,b){ return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000); }
+const vence = r => r && r.inicio ? addDays(r.inicio, (Number(r.semanas)||4)*7) : null;
+const primerNombre = n => String(n||'').trim().split(/\s+/)[0] || '';
+const iniciales = n => String(n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
+const num = v => { if(v===''||v==null) return null; const x = Number(String(v).replace(',','.')); return isFinite(x) ? x : null; };
+const fmtNum = v => v==null ? '—' : String(Math.round(v*10)/10).replace('.',',');
+const lsGet = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsSet = (k,v) => { try{ localStorage.setItem(k,v); }catch(e){} };
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2800); }
+const rnd = n => { const a='abcdefghjkmnpqrstuvwxyz23456789'; let r=''; const b=new Uint32Array(n); crypto.getRandomValues(b); b.forEach(x=>r+=a[x%a.length]); return r; };
+const nuevoId = p => p + Date.now().toString(36) + rnd(4);
+function slug(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,20) || 'alumno'; }
+const nuevoToken = nombre => slug(primerNombre(nombre)) + '-' + rnd(8);
+const sinTildes = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const esMailProfe = m => ADMINS.map(x=>x.toLowerCase()).includes(String(m||'').toLowerCase());
+const urlOk = u => /^https:\/\/[^\s]+$/i.test(String(u||'').trim());
+function edad(nac){ if(!nac) return null; const n=new Date(nac+'T12:00:00'), h=new Date(); let e=h.getFullYear()-n.getFullYear(); if(h.getMonth()<n.getMonth() || (h.getMonth()===n.getMonth() && h.getDate()<n.getDate())) e--; return e>0&&e<110?e:null; }
+
+function estado(al){
+  if(al.activo===false) return {k:'none', txt:'De baja', dias:null};
+  const r = al.rutina;
+  if(!r) return {k:'none', txt:'Sin rutina', dias:null};
+  const d = daysBetween(today(), vence(r));
+  if(d < 0) return {k:'bad', txt:`Vencida hace ${-d} d`, dias:d};
+  if(d <= 7) return {k:'warn', txt: d===0 ? 'Vence hoy' : `Vence en ${d} d`, dias:d};
+  return {k:'ok', txt:`Al día · ${d} d`, dias:d};
+}
+function cargaTxt(it){
+  const sr = it.series && it.reps ? `${it.series} × ${it.reps}` : (it.series || it.reps || '');
+  const peso = it.carga ? it.carga : (SIN_CARGA.includes(it.grupo) ? '' : 'sin peso');
+  return [sr, peso].filter(Boolean).join(' · ');
+}
+
+/* ---------------- imágenes ---------------- */
+function thumb(e, big){
+  const cls = 'ph' + (big?' big':'');
+  if(e && e.img) return `<div class="${cls}"><img src="${IMG(e.img,0)}" alt="" loading="lazy"><img class="alt" src="${IMG(e.img,1)}" alt="" loading="lazy"></div>`;
+  if(e && e.tieneFoto && e.key) return `<div class="${cls}"><img data-foto="${esc(e.key)}" alt="" loading="lazy"></div>`;
+  return `<div class="${cls} none" aria-hidden="true">${esc(iniciales(e && e.nombre))}</div>`;
+}
+const FOTOS = {}; const FOTO_PEND = {};
+function cargarFotos(root){
+  (root||document).querySelectorAll('img[data-foto]').forEach(img => {
+    const k = img.dataset.foto;
+    if(FOTOS[k]){ img.src = FOTOS[k]; return; }
+    if(FOTOS[k]===null) return;
+    if(!FOTO_PEND[k]) FOTO_PEND[k] = Data.get('fotos', k).then(d => { FOTOS[k] = d && d.img ? d.img : null; return FOTOS[k]; }).catch(()=>{ FOTOS[k]=null; return null; });
+    FOTO_PEND[k].then(src => { if(src) document.querySelectorAll(`img[data-foto="${CSS.escape(k)}"]`).forEach(i=>i.src=src); });
+  });
+}
+function comprimir(file, max, q){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => { const k = Math.min(1, max/Math.max(img.width, img.height)); const c = document.createElement('canvas'); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q)); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la imagen')); };
+    img.src = url;
+  });
+}
+let FILE_TARGET = null;
+function elegirArchivo(target){ FILE_TARGET = target; const f = document.getElementById('fileIn'); f.value=''; f.click(); }
+function ytId(u){ const m = String(u||'').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/); return m ? m[1] : null; }
+function videoHTML(u){
+  if(!urlOk(u)) return '';
+  const id = ytId(u);
+  if(id) return `<iframe class="vid" src="https://www.youtube-nocookie.com/embed/${id}?rel=0" title="Video de cómo se hace" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+  if(/\.(mp4|webm|mov)(\?|#|$)/i.test(u)) return `<video class="vid" src="${esc(u)}" controls playsinline preload="metadata"></video>`;
+  return `<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">Abrir el video de cómo se hace</a>`;
+}
+
+/* ---------------- gráfico de progreso (una serie) ---------------- */
+function chartHTML(regs, campo, cid){
+  const [, label, unidad] = CAMPOS.find(c=>c[0]===campo);
+  const pts = (regs||[]).map(r=>({f:r.fecha, v:num(r[campo])})).filter(p=>p.f && p.v!=null).sort((a,b)=>a.f<b.f?-1:a.f>b.f?1:0);
+  if(pts.length < 2) return `<div class="hint">Con dos registros o más de ${label.toLowerCase()} aparece el gráfico de evolución.</div>`;
+  const W=600, H=230, L=46, R=70, T=18, B=30;
+  let mn = Math.min(...pts.map(p=>p.v)), mx = Math.max(...pts.map(p=>p.v));
+  const padv = Math.max((mx-mn)*0.2, 1); mn -= padv; mx += padv;
+  const t0 = new Date(pts[0].f+'T12:00:00').getTime(), t1 = new Date(pts[pts.length-1].f+'T12:00:00').getTime();
+  const X = f => L + (t1===t0 ? (W-L-R)/2 : (new Date(f+'T12:00:00').getTime()-t0)/(t1-t0)*(W-L-R));
+  const Y = v => T + (1-(v-mn)/(mx-mn))*(H-T-B);
+  const ticks = [0,1,2,3].map(i => mn + (mx-mn)*i/3);
+  const path = pts.map((p,i)=>`${i?'L':'M'}${X(p.f).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const last = pts[pts.length-1], first = pts[0];
+  const diff = last.v - first.v;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} a lo largo del tiempo, de ${fmtNum(first.v)} a ${fmtNum(last.v)} ${unidad}">`;
+  ticks.forEach(v => { const y=Y(v).toFixed(1); s += `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/><text x="${L-8}" y="${y}" dy="4" text-anchor="end" font-size="12" fill="var(--muted)">${fmtNum(v)}</text>`; });
+  s += `<text x="${L}" y="${H-8}" font-size="12" fill="var(--muted)">${fmtCorto(first.f)}</text><text x="${W-R}" y="${H-8}" font-size="12" fill="var(--muted)" text-anchor="end">${fmtCorto(last.f)}</text>`;
+  s += `<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p,i) => { const x=X(p.f).toFixed(1), y=Y(p.v).toFixed(1), end=i===pts.length-1;
+    s += `<circle cx="${x}" cy="${y}" r="${end?5:4}" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+    s += `<circle cx="${x}" cy="${y}" r="16" fill="transparent" data-tip="${esc(fmt(p.f)+' · '+fmtNum(p.v)+' '+unidad)}" data-cap="${cid}" style="cursor:pointer"><title>${esc(fmt(p.f)+': '+fmtNum(p.v)+' '+unidad)}</title></circle>`; });
+  s += `<text x="${(X(last.f)+10).toFixed(1)}" y="${Y(last.v).toFixed(1)}" dy="4" font-size="14" font-weight="600" fill="var(--ink)">${fmtNum(last.v)} ${unidad}</text></svg>`;
+  const signo = diff>0 ? '+' : diff<0 ? '−' : '';
+  return `<div class="chart"><div class="meta" style="margin-bottom:4px">${signo}${fmtNum(Math.abs(diff))} ${unidad} desde el ${fmtCorto(first.f)}</div>${s}<div class="cap" id="${cid}">Tocá un punto para ver el valor</div></div>`;
+}
+function tablaRegs(regs, borrable){
+  const rs = (regs||[]).map((r,i)=>({...r,_i:i})).sort((a,b)=>a.fecha<b.fecha?1:-1);
+  if(!rs.length) return '';
+  return `<div class="tablewrap"><table class="regs"><thead><tr><th>Fecha</th>${CAMPOS.map(c=>`<th>${c[1]}</th>`).join('')}${borrable?'<th></th>':''}</tr></thead><tbody>
+    ${rs.map(r=>`<tr><td>${fmt(r.fecha)}</td>${CAMPOS.map(c=>`<td>${num(r[c[0]])==null?'—':fmtNum(num(r[c[0]]))}</td>`).join('')}${borrable?`<td><button class="btn ghost sm danger" data-act="borrarReg" data-i="${r._i}" aria-label="Borrar registro del ${fmt(r.fecha)}">✕</button></td>`:''}</tr>`).join('')}
+  </tbody></table></div>`;
+}
+function ultimos(regs){
+  const out = {};
+  CAMPOS.forEach(([c]) => { const rs=(regs||[]).filter(r=>num(r[c])!=null).sort((a,b)=>a.fecha<b.fecha?-1:1); if(rs.length) out[c]=num(rs[rs.length-1][c]); });
+  return out;
+}
+
+/* ---------------- datos (Firebase o demo) ---------------- */
+const DEMO = !firebaseConfig;
+let fs=null, auth=null;
+if(!DEMO){ firebase.initializeApp(firebaseConfig); fs=firebase.firestore(); auth=firebase.auth(); }
+const DEMO_KEY='gymmaty_demo_v2';
+let demoData=null; const demoSubs=[];
+function demoInit(){
+  if(demoData) return;
+  try{ demoData = JSON.parse(lsGet(DEMO_KEY)); }catch(e){ demoData=null; }
+  if(!demoData){ demoData = seedDemo(); lsSet(DEMO_KEY, JSON.stringify(demoData)); }
+}
+function demoGuardar(col){ lsSet(DEMO_KEY, JSON.stringify(demoData)); demoSubs.filter(s=>s.col===col).forEach(s=>s.f()); }
+const Data = {
+  watch(col, cb){
+    if(DEMO){ demoInit(); const f=()=>cb(clone(demoData[col]||{})); demoSubs.push({col,f}); f(); return ()=>{}; }
+    return fs.collection(col).onSnapshot(s=>{ const m={}; s.forEach(d=>m[d.id]=d.data()); cb(m); }, e=>{ console.error(col, e); cb({}); });
+  },
+  watchDoc(col, id, cb){
+    if(DEMO){ demoInit(); const f=()=>cb(demoData[col] && demoData[col][id] ? clone(demoData[col][id]) : null); const sub={col,f}; demoSubs.push(sub); f(); return ()=>{ const i=demoSubs.indexOf(sub); if(i>=0) demoSubs.splice(i,1); }; }
+    return fs.collection(col).doc(id).onSnapshot(d=>cb(d.exists ? d.data() : null), e=>{ console.error(col, e); cb(null); });
+  },
+  async get(col, id){
+    if(DEMO){ demoInit(); return demoData[col] && demoData[col][id] ? clone(demoData[col][id]) : null; }
+    const d = await fs.collection(col).doc(id).get(); return d.exists ? d.data() : null;
+  },
+  async set(col, id, data){
+    data = clone(data);
+    if(DEMO){ demoInit(); (demoData[col] = demoData[col] || {})[id] = data; demoGuardar(col); return; }
+    await fs.collection(col).doc(id).set(data);
+  },
+  async del(col, id){
+    if(DEMO){ demoInit(); if(demoData[col]) delete demoData[col][id]; demoGuardar(col); return; }
+    await fs.collection(col).doc(id).delete();
+  }
+};
+async function guardar(col, id, data, ok){
+  try{ await Data.set(col, id, data); if(ok) toast(ok); return true; }
+  catch(e){ console.error(e); toast(String(e && e.code||'').includes('resource') || String(e&&e.message||'').includes('size') ? 'La foto es muy pesada. Probá con otra.' : 'No se pudo guardar. Revisá la conexión.'); return false; }
+}
+
+/* ---------------- biblioteca de ejercicios ---------------- */
+let EXDOCS = {};
+function LIB(conBajas){
+  const out = [];
+  EJERCICIOS.forEach(e => { const key='f:'+e.img, o=EXDOCS[key]||{};
+    out.push({key, base:true, nombre:o.nombre||e.nombre, grupo:o.grupo||e.grupo, img:e.img, tip:(o.tip!=null && o.tip!=='') ? o.tip : e.tip, video:o.video||'', tieneFoto:!!o.tieneFoto, oculto:!!o.oculto, editado:!!EXDOCS[key]}); });
+  Object.entries(EXDOCS).filter(([k])=>k.startsWith('c:')).forEach(([k,o]) => out.push({key:k, base:false, nombre:o.nombre||'Sin nombre', grupo:o.grupo||'Otros', img:'', tip:o.tip||'', video:o.video||'', tieneFoto:!!o.tieneFoto, oculto:!!o.oculto}));
+  out.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  return conBajas ? out : out.filter(e=>!e.oculto);
+}
+let LIBMAP = {};
+function refrescarLib(){ LIBMAP = Object.fromEntries(LIB(true).map(e=>[e.key,e])); }
+function resolver(it){
+  const e = LIBMAP[it.ex];
+  return e ? Object.assign({}, it, {key:e.key, nombre:e.nombre, grupo:e.grupo, img:e.img, tip:e.tip, video:e.video, tieneFoto:e.tieneFoto}) : Object.assign({key:it.ex}, it);
+}
+function itemDe(e, extra){ return Object.assign({ex:e.key, nombre:e.nombre, grupo:e.grupo, img:e.img||'', tip:e.tip||'', series:'3', reps:'12', carga:'', descanso:'60 s', nota:''}, extra||{}); }
+
+function seedDemo(){
+  const lib = EJERCICIOS.map(e=>({key:'f:'+e.img, ...e}));
+  const mk = (nombre, series, reps, carga, descanso) => itemDe(lib.find(x=>x.nombre===nombre), {series, reps, carga, descanso:descanso||'60 s'});
+  const plantilla = { nombre:'Hipertrofia 3 días', semanas:4, notas:'Entrar en calor 10 minutos antes de empezar.', dias:[
+    {titulo:'Piernas', items:[mk('Sentadilla con barra','4','10','40 kg','90 s'), mk('Estocada con mancuernas','3','12 c/pierna','8 kg'), mk('Peso muerto rumano','4','10','30 kg','90 s'), mk('Gemelos de pie','3','15',''), mk('Plancha','3','40 s','','45 s')]},
+    {titulo:'Empuje', items:[mk('Press de banca','4','10','30 kg','90 s'), mk('Press de hombros con mancuernas','3','12','10 kg'), mk('Vuelos laterales','3','15','5 kg'), mk('Tríceps en polea','3','12','15 kg')]},
+    {titulo:'Tirón', items:[mk('Jalón al pecho','4','10','35 kg','90 s'), mk('Remo con mancuerna','3','12','14 kg'), mk('Face pull','3','15','10 kg'), mk('Curl de bíceps con mancuernas','3','12','8 kg')]}
+  ]};
+  const r1 = Object.assign(clone(plantilla), {inicio: addDays(today(), -25)});
+  const r2 = Object.assign(clone(plantilla), {nombre:'Funcional inicial', inicio: addDays(today(), -33)});
+  const t1='juan-demo1', t2='laura-demo2', ahora=new Date().toISOString();
+  const regs = [[-56,82.4,94],[-42,81.8,93],[-28,81.1,92],[-14,80.6,91],[-2,80.1,90]].map(([d,p,c])=>({fecha:addDays(today(),d), peso:String(p), cintura:String(c), cadera:'', pecho:'', brazo:'', muslo:''}));
+  return {
+    plantillas: { p1: plantilla },
+    alumnos: {
+      a1: {nombre:'Juan Pérez (ejemplo)', telefono:'', objetivo:'Hipertrofia', observaciones:'', alta:addDays(today(),-60), token:t1, activo:true, rutina:r1, actualizada:ahora, historial:[]},
+      a2: {nombre:'Laura Gómez (ejemplo)', telefono:'', objetivo:'Bajar de peso', observaciones:'Molestia en rodilla derecha: evitar saltos.', alta:addDays(today(),-40), token:t2, activo:true, rutina:r2, actualizada:ahora, historial:[]}
+    },
+    publico: { [t1]: {nombre:'Juan', activo:true, rutina:r1, actualizada:ahora}, [t2]: {nombre:'Laura', activo:true, rutina:r2, actualizada:ahora} },
+    ejercicios: { 'f:Plank': {nombre:'Plancha', grupo:'Core', tip:'Abdomen firme, que la cadera no se caiga.\nMirá al piso para no forzar el cuello.', video:'', tieneFoto:false, oculto:false} },
+    fotos: {},
+    perfiles: { ['demo-'+t1]: {token:t1, nombre:'Juan', foto:'', nacimiento:'1994-05-12', altura:'178', telefono:'', emergencia:'Ana (hermana) 11 5555-0000', molestias:'', registros:regs, creado:ahora} }
+  };
+}
+
+/* ========================================================= */
+/* VISTA DEL ALUMNO  (link ?r=TOKEN)                         */
+/* ========================================================= */
+const params = new URLSearchParams(location.search);
+const TOKEN = params.get('r');
+const linkAlumno = token => location.origin + location.pathname + '?r=' + encodeURIComponent(token);
+const AL = { pub:undefined, tab:'rutina', dia:null, user:null, perfil:undefined, unsubPerfil:null, creando:false, metric:'peso', authModo:'entrar' };
+
+function startAlumno(){
+  document.title = 'Mi rutina';
+  AL.tab = ['rutina','progreso','datos'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'rutina';
+  Data.watch('ejercicios', m => { EXDOCS = m; refrescarLib(); if(AL.pub!==undefined) renderVA(); });
+  Data.watchDoc('publico', TOKEN, p => { AL.pub = p; renderVA(); });
+  if(DEMO){ if(lsGet('demo_user_'+TOKEN)==='1') loginDemo(); }
+  else auth.onAuthStateChanged(u => { AL.user = u; seguirPerfil(); renderVA(); });
+}
+function loginDemo(){ AL.user = {uid:'demo-'+TOKEN, email:'demo'}; lsSet('demo_user_'+TOKEN,'1'); seguirPerfil(); }
+function seguirPerfil(){
+  if(AL.unsubPerfil){ AL.unsubPerfil(); AL.unsubPerfil=null; }
+  AL.perfil = undefined;
+  const u = AL.user; if(!u || esMailProfe(u.email)) return;
+  AL.unsubPerfil = Data.watchDoc('perfiles', u.uid, async p => {
+    if(!p){
+      if(AL.creando) return; AL.creando = true;
+      const nuevo = {token:TOKEN, nombre:(AL.pub&&AL.pub.nombre)||'', foto:'', nacimiento:'', altura:'', telefono:'', emergencia:'', molestias:'', registros:[], creado:new Date().toISOString()};
+      await guardar('perfiles', u.uid, nuevo); AL.creando = false; return;
+    }
+    if(p.token !== TOKEN){ p.token = TOKEN; await guardar('perfiles', u.uid, p); return; }
+    AL.perfil = p; renderVA();
+  });
+}
+
+function renderVA(){
+  const p = AL.pub;
+  if(p === undefined) return;
+  if(!p){ $app.innerHTML = `<div class="stack" style="padding-top:24px"><h1>Mi rutina</h1><div class="empty">No encontramos esta rutina. Pedile a ${esc(PROFE)} que te mande el link de nuevo.</div></div>`; return; }
+  if(p.activo === false){ $app.innerHTML = `<div class="stack" style="padding-top:24px"><h1>Hola, ${esc(p.nombre)}</h1><div class="empty">Tu acceso está pausado. Hablá con ${esc(PROFE)} para retomarlo.</div></div>`; return; }
+  let h = `<div class="stack">`;
+  if(DEMO) h += `<div class="demo">Modo demostración: así ve el alumno la app en su celular.</div>`;
+  h += `<nav class="tabs" role="tablist" style="margin-block:0 4px">${[['rutina','Mi rutina'],['progreso','Mi progreso'],['datos','Mis datos']].map(([k,n])=>`<button class="tab" role="tab" data-altab="${k}" aria-selected="${AL.tab===k}">${n}</button>`).join('')}</nav>`;
+  if(AL.tab==='rutina') h += vaRutina(p);
+  else if(!AL.user) h += vaLogin(p);
+  else if(esMailProfe(AL.user.email)) h += `<div class="empty">Estás con la cuenta del profe. El progreso lo carga cada alumno desde su propia cuenta.</div>`;
+  else if(!AL.perfil) h += `<div class="empty">Cargando tu perfil…</div>`;
+  else h += AL.tab==='progreso' ? vaProgreso(AL.perfil) : vaDatos(AL.perfil);
+  h += `</div>`;
+  $app.innerHTML = h;
+  cargarFotos($app);
+}
+function vaRutina(p){
+  const r = p.rutina;
+  const vistoKey = 'visto_' + TOKEN, visto = lsGet(vistoKey);
+  const esNueva = p.actualizada && visto && p.actualizada !== visto;
+  if(p.actualizada) lsSet(vistoKey, p.actualizada);
+  let h = '';
+  if(esNueva) h += `<div class="al-banner" role="status">${esc(PROFE)} actualizó tu rutina el ${fmtCorto(p.actualizada)}</div>`;
+  h += `<div class="stack" style="gap:4px"><div class="meta" style="text-transform:uppercase;letter-spacing:.06em;font-size:.8rem">Hola, ${esc(p.nombre)}</div>`;
+  if(!r) return h + `<h1>Tu rutina</h1></div><div class="empty">${esc(PROFE)} todavía no te cargó la rutina. Cuando lo haga, aparece acá.</div>`;
+  const v = vence(r), dv = daysBetween(today(), v);
+  const semana = Math.max(1, Math.min(Number(r.semanas)||4, Math.floor(daysBetween(r.inicio, today())/7)+1));
+  h += `<h1>${esc(r.nombre)}</h1><div class="meta">Vigente hasta el ${fmt(v)} · semana ${semana} de ${esc(r.semanas)}</div></div>`;
+  if(dv < 0) h += `<div class="note">Tu rutina terminó el ${fmt(v)}. Pedile a ${esc(PROFE)} la nueva.</div>`;
+  const dias = r.dias || [];
+  if(AL.dia === null){ const g = Number(lsGet('dia_'+TOKEN)); AL.dia = Number.isInteger(g) && g>=0 && g < dias.length ? g : 0; }
+  if(AL.dia >= dias.length) AL.dia = 0;
+  if(dias.length > 1) h += `<div class="al-days">${dias.map((d,i)=>`<button class="al-day" data-dia="${i}" aria-pressed="${i===AL.dia}"><b>Día ${i+1}</b><span>${esc(d.titulo)}</span></button>`).join('')}</div>`;
+  const d = dias[AL.dia];
+  if(d){
+    const items = (d.items||[]).map(resolver);
+    h += `<div class="stack">`;
+    items.forEach((it,i) => {
+      const k = `hecho_${TOKEN}_${today()}_${AL.dia}_${i}`, hecho = lsGet(k) === '1';
+      const media = it.img ? thumb(it,true) : (it.tieneFoto ? `<div class="ph big"><img data-foto="${esc(it.key)}" alt="Máquina para ${esc(it.nombre)}"></div>` : thumb(it,true));
+      h += `<article class="ex${hecho?' hecho':''}">${media}<div class="ex-body">
+        <div class="row" style="justify-content:space-between;align-items:baseline"><h3 style="font-size:1.25rem">${esc(it.nombre)}</h3><span class="ex-num">${i+1}/${items.length}</span></div>
+        ${cargaTxt(it)?`<div class="ex-carga">${esc(cargaTxt(it))}</div>`:''}
+        ${it.descanso?`<div class="ex-desc">Descanso entre series: ${esc(it.descanso)}</div>`:''}
+        ${it.nota?`<div class="ex-nota">${esc(it.nota)}</div>`:''}
+        ${it.tip?`<div class="ex-tip">${esc(it.tip)}</div>`:''}
+        ${it.img && it.tieneFoto ? `<details><summary>Ver la máquina</summary><img class="maq" style="margin-top:8px" data-foto="${esc(it.key)}" alt="Máquina para ${esc(it.nombre)}"></details>`:''}
+        ${urlOk(it.video) ? `<details><summary>Ver video de cómo se hace</summary><div style="margin-top:8px">${videoHTML(it.video)}</div></details>`:''}
+        <button class="btn sm hecho-btn" data-hecho="${esc(k)}" aria-pressed="${hecho}">${hecho?'✓ Hecho':'Marcar como hecho'}</button>
+      </div></article>`;
+    });
+    if(!items.length) h += `<div class="empty">Este día no tiene ejercicios cargados.</div>`;
+    h += `</div>`;
+  }
+  if(r.notas) h += `<div class="note" style="white-space:pre-line">${esc(r.notas)}</div>`;
+  h += `<div class="hint" style="text-align:center;margin-top:8px">Ante cualquier molestia, frená y avisale a ${esc(PROFE)}.<br>Para tenerla a mano: en el navegador tocá Compartir → “Agregar a pantalla de inicio”.</div>`;
+  return h;
+}
+function vaLogin(p){
+  if(DEMO) return `<div class="card stack"><h2>Creá tu usuario</h2><p class="meta" style="margin:0">Con tu usuario cargás tu foto, tus datos, tu peso y tus medidas, y ves tu evolución. ${esc(PROFE)} también lo ve para ajustar tu rutina.</p><button class="btn primary" data-act="demoLogin">Crear mi usuario (demo)</button></div>`;
+  const crear = AL.authModo==='crear';
+  return `<div class="card stack">
+    <h2>${crear?'Creá tu usuario':'Entrá a tu perfil'}</h2>
+    <p class="meta" style="margin:0">Con tu usuario cargás tu foto, tus datos, tu peso y tus medidas, y ves tu evolución. ${esc(PROFE)} también lo ve para ajustar tu rutina.</p>
+    <button class="btn dark" data-act="google">Seguir con Google</button>
+    <div class="gt" style="text-align:center">o con tu mail</div>
+    <form id="fLogin" class="stack">
+      <label for="lg-mail">Mail<input id="lg-mail" type="email" autocomplete="email" required></label>
+      <label for="lg-pass">Contraseña<input id="lg-pass" type="password" autocomplete="${crear?'new-password':'current-password'}" minlength="6" required></label>
+      <button class="btn primary" type="submit">${crear?'Crear usuario':'Entrar'}</button>
+    </form>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn ghost sm" data-act="authModo">${crear?'Ya tengo usuario':'Es mi primera vez: crear usuario'}</button>
+      ${crear?'':`<button class="btn ghost sm" data-act="olvide">Olvidé mi contraseña</button>`}
+    </div></div>`;
+}
+function avatarHTML(pf, size){
+  const s = size ? `style="width:${size}px;height:${size}px"` : '';
+  return pf.foto ? `<img class="avatar" ${s} src="${esc(pf.foto)}" alt="Foto de ${esc(pf.nombre)}">` : `<div class="avatar" ${s} aria-hidden="true">${esc(iniciales(pf.nombre))}</div>`;
+}
+function vaProgreso(pf){
+  const u = ultimos(pf.registros);
+  return `<div class="card stack">
+      <div class="row">${avatarHTML(pf)}<div><h2>${esc(pf.nombre||'Mi perfil')}</h2><div class="meta">${(pf.registros||[]).length} registros</div></div></div>
+      ${Object.keys(u).length?`<div class="kv">${CAMPOS.filter(c=>u[c[0]]!=null).map(c=>`<div><span>${c[1]}</span><b>${fmtNum(u[c[0]])} ${c[2]}</b></div>`).join('')}</div>`:''}
+    </div>
+    <div class="card stack"><h3>Evolución</h3>
+      <div class="chips">${CAMPOS.map(c=>`<button class="gchip" data-metric="${c[0]}" aria-pressed="${AL.metric===c[0]}">${c[1]}</button>`).join('')}</div>
+      ${chartHTML(pf.registros, AL.metric, 'capA')}
+    </div>
+    <form class="card stack" id="fReg"><h3>Nuevo registro</h3>
+      <div class="grid3">
+        <label for="rg-fecha">Fecha<input id="rg-fecha" type="date" value="${today()}" required></label>
+        ${CAMPOS.map(c=>`<label for="rg-${c[0]}">${c[1]} (${c[2]})<input id="rg-${c[0]}" inputmode="decimal" placeholder="—"></label>`).join('')}
+      </div>
+      <div class="hint">Completá solo lo que quieras medir. Conviene pesarse a la misma hora, en ayunas.</div>
+      <button class="btn primary" type="submit">Guardar registro</button>
+    </form>
+    ${(pf.registros||[]).length?`<div class="card stack"><h3>Historial</h3>${tablaRegs(pf.registros, true)}</div>`:''}`;
+}
+function vaDatos(pf){
+  return `<form class="card stack" id="fDatos">
+    <div class="row">${avatarHTML(pf, 80)}<div class="stack" style="gap:6px"><button type="button" class="btn sm" data-act="fotoPerfil">${pf.foto?'Cambiar foto':'Subir foto'}</button>${pf.foto?`<button type="button" class="btn ghost sm danger" data-act="quitarFotoPerfil">Quitar foto</button>`:''}</div></div>
+    <div class="grid3">
+      <label for="pd-nombre">Nombre<input id="pd-nombre" value="${esc(pf.nombre)}"></label>
+      <label for="pd-nac">Fecha de nacimiento<input id="pd-nac" type="date" value="${esc(pf.nacimiento)}"></label>
+      <label for="pd-alt">Altura (cm)<input id="pd-alt" inputmode="numeric" value="${esc(pf.altura)}"></label>
+      <label for="pd-tel">Celular<input id="pd-tel" inputmode="tel" value="${esc(pf.telefono)}"></label>
+    </div>
+    <label for="pd-emer">Contacto de emergencia<input id="pd-emer" value="${esc(pf.emergencia)}" placeholder="Nombre y teléfono"></label>
+    <label for="pd-mol">Lesiones o molestias<textarea id="pd-mol" placeholder="Contale a ${esc(PROFE)} si algo te duele o tenés alguna lesión">${esc(pf.molestias)}</textarea></label>
+    <div class="row"><button class="btn primary" type="submit">Guardar mis datos</button></div>
+  </form>
+  <div class="row" style="justify-content:space-between"><span class="hint">${esc(AL.user && AL.user.email && AL.user.email!=='demo' ? AL.user.email : '')}</span><button class="btn ghost sm" data-act="salirAlumno">Cerrar sesión</button></div>`;
+}
+
+/* ========================================================= */
+/* PANEL DEL PROFE                                           */
+/* ========================================================= */
+const S = { user:null, alumnos:{}, plantillas:{}, perfiles:{}, tab:'panel', screen:null, q:'', exq:'', exg:'Todos', exBajas:false, confirmDel:null, ready:false, got:new Set(), picker:null, metric:'peso' };
+
+function startLogin(){
+  auth.getRedirectResult().catch(e=>console.error(e));
+  auth.onAuthStateChanged(u=>{
+    S.user = u;
+    if(!u) return renderLogin();
+    if(!esMailProfe(u.email)) return renderSinAcceso(u.email);
+    startAdmin();
+  });
+}
+function renderLogin(){
+  $app.innerHTML = `<div class="stack" style="padding-top:40px;max-width:440px;margin:0 auto">
+    <h1>${esc(GIMNASIO)} · Panel del profe</h1>
+    <p class="meta">Entrá con tu cuenta de Google para cargar alumnos, ejercicios y rutinas.</p>
+    <button class="btn primary" data-act="google">Entrar con Google</button>
+    <p class="hint">¿Sos alumno? Abrí el link que te mandó ${esc(PROFE)} por WhatsApp.</p></div>`;
+}
+function renderSinAcceso(mail){
+  $app.innerHTML = `<div class="stack" style="padding-top:40px;max-width:440px;margin:0 auto"><h1>Sin acceso</h1>
+    <p class="meta">La cuenta ${esc(mail)} no está habilitada como profe.</p><button class="btn" data-act="logout">Entrar con otra cuenta</button></div>`;
+}
+async function loginGoogle(){
+  const prov = new firebase.auth.GoogleAuthProvider();
+  try{ await auth.signInWithPopup(prov); }
+  catch(e){ if(e && ['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/cancelled-popup-request'].includes(e.code)) auth.signInWithRedirect(prov); else if(e && e.code!=='auth/popup-closed-by-user') toast('No se pudo entrar. Probá de nuevo.'); }
+}
+const errAuth = c => ({'auth/invalid-credential':'Mail o contraseña incorrectos.','auth/wrong-password':'Mail o contraseña incorrectos.','auth/user-not-found':'No hay un usuario con ese mail. Tocá “crear usuario”.','auth/email-already-in-use':'Ese mail ya tiene usuario: tocá “Ya tengo usuario”.','auth/weak-password':'La contraseña tiene que tener al menos 6 caracteres.','auth/invalid-email':'Revisá el mail, parece que tiene un error.','auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.'})[c] || 'No se pudo entrar. Probá de nuevo.';
+
+let adminStarted = false;
+function startAdmin(){
+  if(adminStarted) return; adminStarted = true;
+  document.body.classList.add('admin');
+  renderAdmin();
+  const listen = col => Data.watch(col, m => {
+    if(col==='ejercicios'){ EXDOCS = m; refrescarLib(); } else S[col] = m;
+    S.got.add(col); if(['alumnos','plantillas','ejercicios'].every(c=>S.got.has(c))) S.ready = true;
+    const s = S.screen;
+    if(S.picker){ renderPickerGrid(); return; }
+    if(!s || s.type==='alumno') renderAdmin();
+  });
+  ['alumnos','plantillas','ejercicios','perfiles'].forEach(listen);
+}
+async function guardarAlumno(id, al){
+  try{
+    await Data.set('alumnos', id, al);
+    await Data.set('publico', al.token, {nombre: primerNombre(al.nombre), activo: al.activo!==false, rutina: al.rutina || null, actualizada: al.actualizada || null});
+    S.alumnos[id] = clone(al); return true;
+  }catch(e){ console.error(e); toast('No se pudo guardar. Revisá la conexión.'); return false; }
+}
+
+const lista = () => Object.entries(S.alumnos).map(([id,a])=>({id,...a})).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+const perfilDe = a => Object.values(S.perfiles).find(p=>p.token===a.token) || null;
+function itemAlumno(a){
+  const e = estado(a), pf = perfilDe(a);
+  return `<button class="item" data-open="${esc(a.id)}"><div class="row" style="flex-wrap:nowrap;min-width:0">${pf?avatarHTML(pf,40):`<div class="avatar" style="width:40px;height:40px;font-size:1rem" aria-hidden="true">${esc(iniciales(a.nombre))}</div>`}<div style="min-width:0"><div class="nm">${esc(a.nombre)}</div><div class="sub">${a.rutina?esc(a.rutina.nombre):'—'}${a.objetivo?' · '+esc(a.objetivo):''}</div></div></div><span class="chip ${e.k}">${e.txt}</span></button>`;
+}
+function header(){
+  return `${DEMO?`<div class="demo">Modo demostración: los datos quedan solo en este navegador. Cuando se conecte Firebase, se guardan en línea.</div>`:''}
+  <div class="top"><h1>${esc(GIMNASIO)} · Rutinas</h1>${S.user?`<button class="btn ghost sm" data-act="logout">Salir</button>`:''}</div>
+  <nav class="tabs" role="tablist">
+    ${[['panel','Panel'],['alumnos','Alumnos'],['plantillas','Plantillas'],['ejercicios','Ejercicios']].map(([k,n])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${S.tab===k && !S.screen}">${n}</button>`).join('')}
+  </nav>`;
+}
+function renderAdmin(){
+  if(!S.ready){ $app.innerHTML = header() + `<div class="empty">Cargando…</div>`; return; }
+  const s = S.screen; let body = '';
+  if(s && s.type==='alumno') body = vAlumno(s.id);
+  else if(s && s.type==='editAlumno') body = vEditAlumno(s.id);
+  else if(s && s.type==='editRutina') body = vEditRutina(s);
+  else if(s && s.type==='avisar') body = vAvisar(s);
+  else if(s && s.type==='editEj') body = vEditEj(s);
+  else if(S.tab==='panel') body = vPanel();
+  else if(S.tab==='alumnos') body = vAlumnos();
+  else if(S.tab==='plantillas') body = vPlantillas();
+  else body = vEjercicios();
+  $app.innerHTML = header() + body;
+  if(s && s.type==='avisar') actualizarAviso();
+  cargarFotos($app);
+}
+
+function vPanel(){
+  const al = lista().filter(a=>a.activo!==false);
+  if(!al.length) return `<div class="stack"><div class="empty">Todavía no hay alumnos cargados.<br>Empezá armando una plantilla y después cargá a tus alumnos.</div>
+    <div class="row"><button class="btn primary" data-act="nuevoAlumno">Nuevo alumno</button><button class="btn" data-tab="plantillas">Ver plantillas</button></div></div>`;
+  const venc = al.filter(a=>estado(a).k==='bad').sort((a,b)=>estado(a).dias-estado(b).dias);
+  const sem = al.filter(a=>estado(a).k==='warn').sort((a,b)=>estado(a).dias-estado(b).dias);
+  const sin = al.filter(a=>!a.rutina);
+  const g = (t,arr,vacio) => `<div class="gt">${t}</div>` + (arr.length ? arr.map(itemAlumno).join('') : `<div class="hint">${vacio}</div>`);
+  return `<div class="stack">
+    <div class="summary"><div class="sum bad"><b>${venc.length}</b><span>vencidas</span></div><div class="sum warn"><b>${sem.length}</b><span>vencen en 7 días</span></div><div class="sum"><b>${al.length}</b><span>alumnos activos</span></div></div>
+    ${g('Renovar ya', venc, 'Ninguna rutina vencida.')}
+    ${g('Vencen esta semana', sem, 'Nada vence en los próximos 7 días.')}
+    ${sin.length ? g('Sin rutina asignada', sin, '') : ''}
+  </div>`;
+}
+function listaAlumnosHTML(){
+  const q = sinTildes(S.q);
+  const al = lista().filter(a=>!q || sinTildes(a.nombre).includes(q));
+  const act = al.filter(a=>a.activo!==false), baja = al.filter(a=>a.activo===false);
+  if(!al.length) return `<div class="empty">${q?'No hay alumnos con ese nombre.':'Todavía no hay alumnos. Tocá “Nuevo alumno”.'}</div>`;
+  return act.map(itemAlumno).join('') + (baja.length ? `<div class="gt">Dados de baja</div>` + baja.map(itemAlumno).join('') : '');
+}
+function vAlumnos(){
+  return `<div class="stack">
+    <div class="row" style="align-items:flex-end"><label style="flex:1 1 220px" for="q">Buscar<input id="q" type="search" value="${esc(S.q)}" placeholder="Nombre del alumno" autocomplete="off"></label>
+    <button class="btn primary" data-act="nuevoAlumno">Nuevo alumno</button></div>
+    <div class="stack" id="listaAl">${listaAlumnosHTML()}</div></div>`;
+}
+function vPlantillas(){
+  const pl = Object.entries(S.plantillas).map(([id,p])=>({id,...p})).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  return `<div class="stack">
+    <div class="note">Las plantillas son las rutinas base. Se arman una vez y después se asignan a cada alumno con un toque, ajustando lo que haga falta.</div>
+    <div class="row"><button class="btn primary" data-act="nuevaPlantilla">Nueva plantilla</button></div>
+    ${pl.length ? pl.map(p=>`<button class="item" data-plantilla="${esc(p.id)}"><div><div class="nm">${esc(p.nombre)}</div><div class="sub">${(p.dias||[]).length} días · ${esc(p.semanas)} semanas · ${(p.dias||[]).reduce((n,d)=>n+(d.items||[]).length,0)} ejercicios</div></div><span class="chip none">Editar</span></button>`).join('')
+      : `<div class="empty">Sin plantillas todavía. Creá la primera, por ejemplo “Hipertrofia 3 días”.</div>`}
+  </div>`;
+}
+function ejCard(e, attr){
+  return `<button class="pcard${e.oculto?' off':''}" ${attr}>${e.img?thumb(e,true):(e.tieneFoto?`<div class="ph big"><img data-foto="${esc(e.key)}" alt=""></div>`:thumb(e,true))}
+    <div class="nm" style="font-size:.95rem;line-height:1.2">${esc(e.nombre)}</div>
+    <div class="badges"><span class="badge">${esc(e.grupo)}</span>${e.tieneFoto?'<span class="badge on">Foto máquina</span>':''}${urlOk(e.video)?'<span class="badge on">Video</span>':''}${!e.base?'<span class="badge">Propio</span>':''}${e.oculto?'<span class="badge">De baja</span>':''}</div></button>`;
+}
+function ejFiltrados(conBajas){
+  const q = sinTildes(S.exq);
+  return LIB(conBajas).filter(e => (S.exg==='Todos' || (S.exg==='Propios' ? !e.base : e.grupo===S.exg)) && (!q || sinTildes(e.nombre).includes(q)));
+}
+function vEjercicios(){
+  const items = ejFiltrados(S.exBajas);
+  return `<div class="stack">
+    <div class="note">Tocá un ejercicio para cambiarle el nombre, la explicación, la foto de la máquina o el video. Los cambios se ven en las rutinas de todos los alumnos.</div>
+    <div class="row" style="align-items:flex-end"><label style="flex:1 1 220px" for="exq">Buscar<input id="exq" type="search" value="${esc(S.exq)}" placeholder="Ej: sentadilla" autocomplete="off"></label>
+      <button class="btn primary" data-act="nuevoEj">Nuevo ejercicio</button></div>
+    <div class="chips">${['Todos',...GRUPOS,'Propios'].map(g=>`<button class="gchip" data-exg="${esc(g)}" aria-pressed="${S.exg===g}">${esc(g)}</button>`).join('')}</div>
+    <label style="flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:.9rem;font-weight:500"><input type="checkbox" id="exBajas" style="width:auto" ${S.exBajas?'checked':''}> Mostrar también los dados de baja</label>
+    <div class="pgrid" id="exGrid">${items.map(e=>ejCard(e, `data-ej="${esc(e.key)}"`)).join('') || ''}</div>
+    ${items.length?'':`<div class="empty">No hay ejercicios con ese filtro.</div>`}
+  </div>`;
+}
+function vEditEj(s){
+  const d = s.draft;
+  const base = d.base ? EJERCICIOS.find(e=>'f:'+e.img===d.key) : null;
+  const fotoSrc = d.fotoCambio ? d.fotoData : (d.tieneFoto ? null : '');
+  return `<form class="stack" id="fEj">
+    <div class="backbar"><button type="button" class="btn ghost" data-back>← Volver</button>
+      <div class="row">${d.key?`<button type="button" class="btn sm" data-act="bajaEj">${d.oculto?'Volver a dar de alta':'Dar de baja'}</button>`:''}
+      ${d.key && !d.base?`<button type="button" class="btn ghost sm danger" data-act="borrarEj">${S.confirmDel===d.key?'Tocá de nuevo para borrar':'Borrar'}</button>`:''}
+      ${d.base && d.editado?`<button type="button" class="btn ghost sm" data-act="restaurarEj">${S.confirmDel===d.key?'Tocá de nuevo para confirmar':'Volver al original'}</button>`:''}</div></div>
+    <h2>${d.key?'Editar ejercicio':'Nuevo ejercicio'}</h2>
+    ${d.oculto?`<div class="note">Este ejercicio está dado de baja: no aparece para elegir en las rutinas nuevas.</div>`:''}
+    <div class="two">
+      <div class="stack">
+        <div class="grid3">
+          <label for="ej-n">Nombre<input id="ej-n" data-x="nombre" required value="${esc(d.nombre)}" placeholder="Ej: Pipito"></label>
+          <label for="ej-g">Grupo muscular<select id="ej-g" data-x="grupo">${GRUPOS.map(g=>`<option ${g===d.grupo?'selected':''}>${esc(g)}</option>`).join('')}</select></label>
+        </div>
+        <label for="ej-t">Cómo se hace (lo ve el alumno)<textarea id="ej-t" data-x="tip" placeholder="Postura, recorrido, errores a evitar…">${esc(d.tip)}</textarea></label>
+        <label for="ej-v">Link del video<input id="ej-v" data-x="video" value="${esc(d.video)}" placeholder="https://youtu.be/…  o link de Instagram / TikTok"></label>
+        <div class="hint">Los videos de YouTube se ven dentro de la app. Para un video propio, subilo a YouTube como “no listado” y pegá el link.</div>
+        <div id="vidPrev">${urlOk(d.video)?videoHTML(d.video):''}</div>
+      </div>
+      <div class="stack">
+        ${base?`<div class="card stack"><div class="gt" style="margin:0">Imagen de referencia</div>${thumb(base,true)}</div>`:''}
+        <div class="card stack"><div class="gt" style="margin:0">Foto de la máquina o del ejercicio</div>
+          ${fotoSrc ? `<img class="maq" src="${esc(fotoSrc)}" alt="">` : (fotoSrc===null ? `<img class="maq" data-foto="${esc(d.key)}" alt="">` : `<div class="empty">Sin foto todavía</div>`)}
+          <div class="row"><button type="button" class="btn" data-act="fotoEj">${(fotoSrc||fotoSrc===null)?'Cambiar foto':'Subir foto'}</button>${(fotoSrc||fotoSrc===null)?`<button type="button" class="btn ghost danger sm" data-act="quitarFotoEj">Quitar</button>`:''}</div>
+          <div class="hint">Desde la compu elegís el archivo; desde el celu podés sacarla en el momento.</div>
+        </div>
+      </div>
+    </div>
+    <div class="row"><button class="btn primary" type="submit">Guardar ejercicio</button></div>
+  </form>`;
+}
+function rutinaResumen(r){
+  return `<div class="stack">${(r.dias||[]).map((d,i)=>`<div class="day"><h3>Día ${i+1} · ${esc(d.titulo)}</h3>
+    ${(d.items||[]).map(resolver).map(it=>`<div class="rl">${it.img||!it.tieneFoto?thumb(it):`<img class="maq-mini" data-foto="${esc(it.key)}" alt="">`}<div><div class="nm">${esc(it.nombre)}</div><div class="sub">${esc(cargaTxt(it))}${it.descanso?' · descanso '+esc(it.descanso):''}${it.nota?' · '+esc(it.nota):''}</div></div></div>`).join('') || '<div class="hint">Sin ejercicios</div>'}
+  </div>`).join('')}${r.notas?`<div class="meta">Notas: ${esc(r.notas)}</div>`:''}</div>`;
+}
+function vAlumno(id){
+  const a = S.alumnos[id]; if(!a){ S.screen=null; return vPanel(); }
+  const e = estado(a), r = a.rutina, hist = (a.historial||[]).slice().reverse(), pf = perfilDe(a);
+  const plOpts = Object.entries(S.plantillas).map(([pid,p])=>`<option value="${esc(pid)}">${esc(p.nombre)}</option>`).join('');
+  const baja = a.activo===false;
+  const ed = pf ? edad(pf.nacimiento) : null;
+  return `<div class="stack">
+    <div class="backbar"><button class="btn ghost" data-back>← Volver</button><div class="row"><button class="btn sm" data-act="editAlumno">Editar datos</button><button class="btn sm" data-act="bajaAlumno">${baja?'Dar de alta de nuevo':'Dar de baja'}</button></div></div>
+    <div class="row">${pf?avatarHTML(pf):`<div class="avatar" aria-hidden="true">${esc(iniciales(a.nombre))}</div>`}<div><h2>${esc(a.nombre)}</h2><div class="meta">${[a.objetivo, a.telefono, a.alta?'Alta '+fmt(a.alta):''].filter(Boolean).map(esc).join(' · ')}</div></div></div>
+    ${baja?`<div class="note">Dado de baja: su link muestra que el acceso está pausado. Se conserva todo su historial.</div>`:''}
+    ${a.observaciones?`<div class="note">${esc(a.observaciones)}</div>`:''}
+    <div class="two">
+      <div class="stack">
+        <div class="card stack">
+          <div class="backbar"><div><h3>${r?esc(r.nombre):'Sin rutina'}</h3>${r?`<div class="meta">Desde ${fmt(r.inicio)} · ${esc(r.semanas)} semanas · renovar el ${fmt(vence(r))}</div>`:''}</div><span class="chip ${e.k}">${e.txt}</span></div>
+          ${r ? rutinaResumen(r) : `<div class="hint">Asigná una plantilla o armá una rutina desde cero.</div>`}
+          <div class="row">${r?`<button class="btn primary" data-act="renovar">Renovar rutina</button><button class="btn" data-act="ajustar">Ajustar</button>`:''}
+            <button class="btn${r?'':' primary'}" data-act="desdeCero">${r?'Nueva desde cero':'Armar desde cero'}</button></div>
+          ${plOpts?`<div class="row" style="align-items:flex-end"><label style="flex:1 1 180px" for="selPl">Asignar plantilla<select id="selPl">${plOpts}</select></label><button class="btn" data-act="asignar">Asignar</button></div>`:''}
+        </div>
+        <div class="card stack"><h3>Historial de rutinas</h3>
+          ${hist.length ? hist.map(h=>`<details><summary>${esc(h.nombre)} <span class="meta">· ${fmt(h.inicio)} al ${fmt(h.fin)}</span></summary><div style="margin-top:10px">${rutinaResumen(h)}</div></details>`).join('') : `<div class="hint">Cuando renueves la rutina, la anterior queda guardada acá.</div>`}
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card stack"><h3>Link del alumno</h3>
+          <input readonly id="linkAl" value="${esc(linkAlumno(a.token))}" aria-label="Link del alumno">
+          <div class="row"><button class="btn sm" data-act="copiarLink">Copiar link</button><a class="btn sm" href="${esc(linkAlumno(a.token))}" target="_blank" rel="noopener">Ver como alumno</a>
+          ${r&&!baja?`<button class="btn dark sm" data-act="avisar">Avisar por WhatsApp</button>`:''}</div>
+        </div>
+        <div class="card stack"><h3>Progreso y datos del alumno</h3>
+          ${pf ? `<div class="kv">${ed?`<div><span>Edad</span><b>${ed}</b></div>`:''}${pf.altura?`<div><span>Altura</span><b>${esc(pf.altura)} cm</b></div>`:''}${CAMPOS.map(c=>{const u=ultimos(pf.registros)[c[0]];return u!=null?`<div><span>${c[1]}</span><b>${fmtNum(u)} ${c[2]}</b></div>`:''}).join('')}</div>
+            ${pf.molestias?`<div class="note"><b>Molestias que reportó:</b> ${esc(pf.molestias)}</div>`:''}
+            ${pf.emergencia?`<div class="meta">Emergencia: ${esc(pf.emergencia)}</div>`:''}
+            <div class="chips">${CAMPOS.map(c=>`<button class="gchip" data-metric="${c[0]}" aria-pressed="${S.metric===c[0]}">${c[1]}</button>`).join('')}</div>
+            ${chartHTML(pf.registros, S.metric, 'capP')}
+            ${(pf.registros||[]).length?`<details><summary>Ver todos los registros</summary><div style="margin-top:8px">${tablaRegs(pf.registros,false)}</div></details>`:''}`
+          : `<div class="hint">Todavía no creó su usuario. Cuando entre a su link y toque “Mi progreso”, va a poder cargar su foto, peso y medidas, y vas a verlos acá.</div>`}
+        </div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:flex-end"><button class="btn ghost danger" data-act="borrarAlumno">${S.confirmDel===id?'Tocá de nuevo para borrar todo':'Borrar alumno definitivamente'}</button></div>
+  </div>`;
+}
+function vEditAlumno(id){
+  const a = id ? S.alumnos[id] : {nombre:'',telefono:'',objetivo:'',observaciones:'',alta:today()};
+  return `<form class="stack" id="fAl" style="max-width:760px">
+    <div class="backbar"><button type="button" class="btn ghost" data-back>← Cancelar</button></div>
+    <h2>${id?'Editar alumno':'Nuevo alumno'}</h2>
+    <div class="grid3">
+      <label for="al-nombre">Nombre y apellido<input id="al-nombre" required value="${esc(a.nombre)}"></label>
+      <label for="al-tel">Celular<input id="al-tel" inputmode="tel" placeholder="11 2345-6789" value="${esc(a.telefono)}"></label>
+      <label for="al-obj">Objetivo<input id="al-obj" placeholder="Hipertrofia, bajar de peso…" value="${esc(a.objetivo)}"></label>
+      <label for="al-alta">Fecha de alta<input id="al-alta" type="date" value="${esc(a.alta||'')}"></label>
+    </div>
+    <label for="al-obs">Observaciones (solo las ves vos)<textarea id="al-obs" placeholder="Ej: molestia en rodilla derecha, evitar impacto">${esc(a.observaciones)}</textarea></label>
+    <div class="row"><button class="btn primary" type="submit">Guardar</button></div>
+  </form>`;
+}
+function rutinaVacia(){ return {nombre:'', semanas:4, notas:'', dias:[{titulo:'Día 1',items:[]},{titulo:'Día 2',items:[]},{titulo:'Día 3',items:[]}]}; }
+function vEditRutina(s){
+  const r = s.draft, esPl = s.target==='plantilla';
+  const al = esPl ? null : S.alumnos[s.id];
+  const titulo = esPl ? (s.id?'Editar plantilla':'Nueva plantilla') : (s.archivar ? 'Renovar rutina · ' + esc(al.nombre) : 'Rutina de ' + esc(al.nombre));
+  return `<form class="stack" id="fR">
+    <div class="backbar"><button type="button" class="btn ghost" data-back>← Cancelar</button>
+      ${esPl && s.id ? `<button type="button" class="btn ghost danger" data-act="borrarPlantilla">${S.confirmDel===s.id?'Tocá de nuevo para borrar':'Borrar plantilla'}</button>`:''}</div>
+    <h2>${titulo}</h2>
+    ${s.archivar?`<div class="note">La rutina anterior queda guardada en el historial. Arrancás con una copia para ajustar.</div>`:''}
+    <div class="grid3">
+      <label for="r-nombre">Nombre de la rutina<input id="r-nombre" data-r="nombre" required value="${esc(r.nombre)}" placeholder="Hipertrofia 3 días"></label>
+      ${esPl?'':`<label for="r-inicio">Empieza el<input id="r-inicio" data-r="inicio" type="date" value="${esc(r.inicio||today())}"></label>`}
+      <label for="r-sem">Duración (semanas)<input id="r-sem" data-r="semanas" type="number" min="1" max="16" inputmode="numeric" value="${esc(r.semanas||4)}"></label>
+    </div>
+    ${(r.dias||[]).map((d,di)=>`<div class="card stack">
+      <div class="row" style="align-items:flex-end"><label style="flex:1 1 160px" for="dt-${di}">Día ${di+1}<input id="dt-${di}" data-dt="${di}" value="${esc(d.titulo)}" placeholder="Piernas, Empuje…"></label>
+      <button type="button" class="btn ghost danger sm" data-act="quitarDia" data-d="${di}">Quitar día</button></div>
+      ${(d.items||[]).map((raw,ii)=>{ const it=resolver(raw); return `<div class="it">${it.img||!it.tieneFoto?thumb(it):`<img class="maq-mini" data-foto="${esc(it.key)}" alt="">`}<div class="it-main">
+          <div class="row" style="justify-content:space-between"><div class="nm">${esc(it.nombre)}</div><div class="badges">${it.tieneFoto?'<span class="badge on">Foto máquina</span>':''}${urlOk(it.video)?'<span class="badge on">Video</span>':''}</div></div>
+          <div class="it-f">
+            <label for="s-${di}-${ii}">Series<input id="s-${di}-${ii}" data-d="${di}" data-i="${ii}" data-f="series" inputmode="numeric" value="${esc(it.series)}"></label>
+            <label for="p-${di}-${ii}">Repeticiones<input id="p-${di}-${ii}" data-d="${di}" data-i="${ii}" data-f="reps" value="${esc(it.reps)}"></label>
+            <label for="c-${di}-${ii}">Peso<input id="c-${di}-${ii}" data-d="${di}" data-i="${ii}" data-f="carga" value="${esc(it.carga)}" placeholder="Sin peso"></label>
+            <label for="ds-${di}-${ii}">Descanso<input id="ds-${di}-${ii}" data-d="${di}" data-i="${ii}" data-f="descanso" value="${esc(it.descanso)}" placeholder="60 s"></label>
+          </div>
+          <input aria-label="Nota para el alumno" id="n-${di}-${ii}" data-d="${di}" data-i="${ii}" data-f="nota" value="${esc(it.nota)}" placeholder="Nota para el alumno (opcional)">
+        </div><div class="it-ctl">
+          <button type="button" class="btn sm" data-act="subir" data-d="${di}" data-i="${ii}" aria-label="Subir" ${ii===0?'disabled':''}>↑</button>
+          <button type="button" class="btn sm" data-act="bajar" data-d="${di}" data-i="${ii}" aria-label="Bajar" ${ii===d.items.length-1?'disabled':''}>↓</button>
+          <button type="button" class="btn sm danger" data-act="quitarIt" data-d="${di}" data-i="${ii}" aria-label="Quitar">✕</button>
+        </div></div>`; }).join('')}
+      <button type="button" class="btn" data-act="abrirPicker" data-d="${di}">+ Agregar ejercicios</button>
+    </div>`).join('')}
+    <div class="row"><button type="button" class="btn" data-act="agregarDia">+ Agregar día</button></div>
+    <label for="r-notas">Notas generales (las ve el alumno)<textarea id="r-notas" data-r="notas" style="min-height:60px" placeholder="Entrada en calor, hidratación…">${esc(r.notas||'')}</textarea></label>
+    <div class="row"><button class="btn primary" type="submit">${esPl?'Guardar plantilla':(s.archivar?'Guardar renovación':'Guardar rutina')}</button></div>
+  </form>`;
+}
+
+/* ---- aviso por WhatsApp ---- */
+function waNumero(tel){ let d=String(tel||'').replace(/\D/g,''); if(!d) return ''; if(d.startsWith('0')) d=d.slice(1); if(d.length===10) d='549'+d; return d.length>=12 ? d : ''; }
+function mensajeAviso(a, primera, cambio){
+  const r = a.rutina;
+  let m = `¡Hola ${primerNombre(a.nombre)}! ${primera ? 'Ya tenés tu rutina armada.' : 'Te actualicé la rutina.'}\n\n*${r.nombre}*, vigente hasta el ${fmt(vence(r))}.\n`;
+  if(cambio && cambio.trim()) m += `\nQué cambió: ${cambio.trim()}\n`;
+  m += `\nMirala acá (cada ejercicio tiene su foto y cómo se hace):\n${linkAlumno(a.token)}\n\nCualquier duda me escribís. ¡A darle!\n${PROFE}`;
+  return m;
+}
+function vAvisar(s){
+  const a = S.alumnos[s.id];
+  return `<div class="stack" style="max-width:640px">
+    <div class="backbar"><button class="btn ghost" data-back>← Ahora no</button></div>
+    <h2>Avisarle a ${esc(primerNombre(a.nombre))}</h2>
+    <label for="cambio">Qué cambió (opcional)<input id="cambio" value="${esc(s.cambio||'')}" placeholder="Ej: subimos la carga en sentadilla y sumamos estocadas"></label>
+    <div class="gt">Así le llega</div>
+    <pre class="msg" id="msgPrev"></pre>
+    <div class="row"><a class="btn primary" id="waBtn" target="_blank" rel="noopener" href="#">Enviar por WhatsApp</a><button class="btn" data-act="copiarMsg">Copiar mensaje</button></div>
+    ${waNumero(a.telefono)?'':`<div class="hint">No tiene celular cargado con código de área: WhatsApp te va a pedir elegir el contacto.</div>`}
+  </div>`;
+}
+function actualizarAviso(){
+  const s = S.screen, a = S.alumnos[s.id], msg = mensajeAviso(a, s.primera, s.cambio);
+  const pre = document.getElementById('msgPrev'); if(pre) pre.textContent = msg;
+  const btn = document.getElementById('waBtn'); if(btn) btn.href = `https://wa.me/${waNumero(a.telefono)}?text=${encodeURIComponent(msg)}`;
+}
+
+/* ---- selector de ejercicios ---- */
+function abrirPicker(di){ S.picker = {dia:di, sel:[], grupo:'Todos', q:'', crear:false}; $sheet.hidden=false; document.body.style.overflow='hidden'; renderPicker(); }
+function cerrarPicker(){ S.picker=null; $sheet.hidden=true; $sheet.innerHTML=''; document.body.style.overflow=''; }
+function renderPicker(){
+  const p = S.picker;
+  $sheet.innerHTML = `<div class="sheet-head"><div><div style="font-size:.8rem;color:#b9c2bd;text-transform:uppercase;letter-spacing:.06em">Agregar al día ${p.dia+1}</div><h2 style="color:#fff">Elegí ejercicios</h2></div><button class="btn ghost" data-act="cerrarPicker">Cancelar</button></div>
+  <div class="sheet-body"><div class="sheet-in">
+    <label for="pq">Buscar<input id="pq" type="search" value="${esc(p.q)}" placeholder="Ej: sentadilla, remo, plancha" autocomplete="off"></label>
+    <div class="chips" style="margin-top:10px">${['Todos',...GRUPOS,'Propios'].map(g=>`<button class="gchip" data-grupo="${esc(g)}" aria-pressed="${p.grupo===g}">${esc(g)}</button>`).join('')}</div>
+    <div id="pgrid"></div>
+    <div class="card stack" style="margin-top:14px">
+      ${p.crear ? `<h3>Ejercicio nuevo</h3>
+        <label for="cx-n">Nombre<input id="cx-n" placeholder="Ej: Pipito"></label>
+        <label for="cx-g">Grupo<select id="cx-g">${GRUPOS.map(g=>`<option>${esc(g)}</option>`).join('')}</select></label>
+        <label for="cx-t">Cómo se hace<textarea id="cx-t" style="min-height:60px" placeholder="Postura, recorrido, errores a evitar…"></textarea></label>
+        <label for="cx-v">Link del video (opcional)<input id="cx-v" placeholder="https://youtu.be/…"></label>
+        <div class="hint">La foto de la máquina se agrega después desde la pestaña Ejercicios.</div>
+        <div class="row"><button class="btn dark" data-act="guardarPropio">Guardar y elegir</button><button class="btn ghost" data-act="toggleCrear">Cancelar</button></div>`
+      : `<div class="hint">¿No está el que buscás?</div><button class="btn" data-act="toggleCrear">Crear ejercicio nuevo</button>`}
+    </div>
+  </div></div>
+  <div class="sheet-foot"><span class="meta" id="pcount"></span><button class="btn primary" data-act="listoPicker">Agregar</button></div>`;
+  renderPickerGrid();
+}
+function renderPickerGrid(){
+  const p = S.picker; if(!p) return;
+  const q = sinTildes(p.q);
+  const items = LIB(false).filter(e => (p.grupo==='Todos' || (p.grupo==='Propios' ? !e.base : e.grupo===p.grupo)) && (!q || sinTildes(e.nombre).includes(q)));
+  const g = document.getElementById('pgrid'); if(!g) return;
+  g.innerHTML = items.length ? `<div class="pgrid">${items.map(e=>{ const on=p.sel.includes(e.key); return ejCard(e, `data-pick="${esc(e.key)}" aria-pressed="${on}"`).replace('</button>', `<div class="tag">${on?'✓ Elegido':'+ Elegir'}</div></button>`); }).join('')}</div>`
+    : `<div class="empty" style="margin-top:12px">No hay ejercicios con ese nombre. Podés crearlo abajo.</div>`;
+  document.getElementById('pcount').textContent = p.sel.length ? `${p.sel.length} elegido${p.sel.length>1?'s':''}` : 'Tocá los ejercicios para elegirlos';
+  $sheet.querySelector('[data-act="listoPicker"]').disabled = !p.sel.length;
+  cargarFotos(g);
+}
+
+/* ---------------- eventos ---------------- */
+document.addEventListener('click', async ev => {
+  const tip = ev.target.closest('[data-tip]');
+  if(tip){ const c=document.getElementById(tip.dataset.cap); if(c) c.textContent = tip.dataset.tip; return; }
+  const t = ev.target.closest('button,a'); if(!t) return;
+  const act = t.dataset.act;
+  if(act==='google'){ return loginGoogle(); }
+  if(act==='logout'){ if(auth) await auth.signOut(); location.reload(); return; }
+  if(TOKEN) return clickAlumno(t, act);
+  if(S.picker) return clickPicker(t, act);
+  return clickAdmin(t, act);
+});
+
+async function clickAlumno(t, act){
+  if(t.dataset.altab){ AL.tab = t.dataset.altab; history.replaceState(null,'','#'+AL.tab); renderVA(); window.scrollTo(0,0); return; }
+  if(t.dataset.dia !== undefined){ AL.dia = Number(t.dataset.dia); lsSet('dia_'+TOKEN, String(AL.dia)); renderVA(); window.scrollTo(0,0); return; }
+  if(t.dataset.hecho){ const k=t.dataset.hecho; lsSet(k, lsGet(k)==='1' ? '0' : '1'); renderVA(); return; }
+  if(t.dataset.metric){ AL.metric = t.dataset.metric; renderVA(); return; }
+  const u = AL.user, pf = AL.perfil;
+  switch(act){
+    case 'demoLogin': loginDemo(); return renderVA();
+    case 'authModo': AL.authModo = AL.authModo==='crear' ? 'entrar' : 'crear'; return renderVA();
+    case 'olvide': { const m=(document.getElementById('lg-mail')||{}).value; if(!m){ toast('Escribí tu mail arriba y tocá de nuevo'); return; } try{ await auth.sendPasswordResetEmail(m); toast('Te mandamos un mail para crear una contraseña nueva'); }catch(e){ toast(errAuth(e.code)); } return; }
+    case 'salirAlumno': if(DEMO){ lsSet('demo_user_'+TOKEN,'0'); AL.user=null; seguirPerfil(); return renderVA(); } await auth.signOut(); return;
+    case 'fotoPerfil': return elegirArchivo({kind:'perfil'});
+    case 'quitarFotoPerfil': { const p=clone(pf); p.foto=''; await guardar('perfiles', u.uid, p, 'Foto quitada'); return; }
+    case 'borrarReg': { const p=clone(pf); p.registros.splice(Number(t.dataset.i),1); await guardar('perfiles', u.uid, p, 'Registro borrado'); return; }
+  }
+}
+
+async function clickPicker(t, act){
+  const p = S.picker;
+  if(t.dataset.grupo){ p.grupo = t.dataset.grupo; $sheet.querySelectorAll('.gchip').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.grupo===p.grupo))); renderPickerGrid(); return; }
+  if(t.dataset.pick){ const k=t.dataset.pick, i=p.sel.indexOf(k); if(i>=0) p.sel.splice(i,1); else p.sel.push(k); renderPickerGrid(); return; }
+  if(act==='cerrarPicker') return cerrarPicker();
+  if(act==='toggleCrear'){ p.crear=!p.crear; renderPicker(); return; }
+  if(act==='guardarPropio'){
+    const n=document.getElementById('cx-n').value.trim(); if(!n){ toast('Poné un nombre'); return; }
+    const v=document.getElementById('cx-v').value.trim();
+    if(v && !urlOk(v)){ toast('El link del video tiene que empezar con https://'); return; }
+    const key='c:'+nuevoId('e');
+    const data={nombre:n, grupo:document.getElementById('cx-g').value, tip:document.getElementById('cx-t').value.trim(), video:v, tieneFoto:false, oculto:false};
+    if(await guardar('ejercicios', key, data, 'Ejercicio creado')){ EXDOCS[key]=data; refrescarLib(); p.sel.push(key); p.crear=false; p.grupo='Propios'; renderPicker(); }
+    return;
+  }
+  if(act==='listoPicker'){
+    const d = S.screen.draft.dias[p.dia];
+    p.sel.forEach(k=>{ const e=LIBMAP[k]; if(e) d.items.push(itemDe(e)); });
+    cerrarPicker(); renderAdmin(); return;
+  }
+}
+
+async function clickAdmin(t, act){
+  if(t.dataset.tab){ S.tab=t.dataset.tab; S.screen=null; S.confirmDel=null; renderAdmin(); return; }
+  if(t.dataset.exg){ S.exg=t.dataset.exg; renderAdmin(); return; }
+  if(t.dataset.metric){ S.metric=t.dataset.metric; renderAdmin(); return; }
+  const ir = scr => { S.screen=scr; S.confirmDel=null; renderAdmin(); window.scrollTo(0,0); };
+  if(t.hasAttribute('data-back')){
+    const s = S.screen;
+    return ir(s && (s.type==='editRutina' && s.target==='alumno' || s.type==='avisar' || (s.type==='editAlumno' && s.id)) ? {type:'alumno', id:s.id} : null);
+  }
+  if(t.dataset.open) return ir({type:'alumno', id:t.dataset.open});
+  if(t.dataset.plantilla) return ir({type:'editRutina', target:'plantilla', id:t.dataset.plantilla, draft:clone(S.plantillas[t.dataset.plantilla])});
+  if(t.dataset.ej){ const e=LIBMAP[t.dataset.ej]; return ir({type:'editEj', draft:{key:e.key, base:e.base, editado:!!e.editado, nombre:e.nombre, grupo:e.grupo, tip:e.tip, video:e.video, tieneFoto:e.tieneFoto, oculto:e.oculto, fotoCambio:false, fotoData:''}}); }
+  if(!act) return;
+  const s = S.screen;
+  switch(act){
+    case 'nuevoAlumno': return ir({type:'editAlumno', id:null});
+    case 'editAlumno': return ir({type:'editAlumno', id:s.id});
+    case 'nuevaPlantilla': return ir({type:'editRutina', target:'plantilla', id:null, draft:rutinaVacia()});
+    case 'nuevoEj': return ir({type:'editEj', draft:{key:null, base:false, nombre:'', grupo:'Otros', tip:'', video:'', tieneFoto:false, oculto:false, fotoCambio:false, fotoData:''}});
+    case 'desdeCero': { const d=rutinaVacia(); d.inicio=today(); return ir({type:'editRutina', target:'alumno', id:s.id, archivar:!!S.alumnos[s.id].rutina, draft:d}); }
+    case 'ajustar': return ir({type:'editRutina', target:'alumno', id:s.id, draft:clone(S.alumnos[s.id].rutina)});
+    case 'renovar': { const d=clone(S.alumnos[s.id].rutina); d.inicio=today(); return ir({type:'editRutina', target:'alumno', id:s.id, archivar:true, draft:d}); }
+    case 'asignar': { const d=clone(S.plantillas[document.getElementById('selPl').value]); d.inicio=today(); return ir({type:'editRutina', target:'alumno', id:s.id, archivar:!!S.alumnos[s.id].rutina, draft:d}); }
+    case 'avisar': return ir({type:'avisar', id:s.id, primera:false, cambio:''});
+    case 'agregarDia': s.draft.dias.push({titulo:'Día '+(s.draft.dias.length+1), items:[]}); return renderAdmin();
+    case 'quitarDia': s.draft.dias.splice(Number(t.dataset.d),1); return renderAdmin();
+    case 'abrirPicker': return abrirPicker(Number(t.dataset.d));
+    case 'subir': case 'bajar': { const d=s.draft.dias[Number(t.dataset.d)].items, i=Number(t.dataset.i), j=act==='subir'?i-1:i+1; if(j<0||j>=d.length) return; [d[i],d[j]]=[d[j],d[i]]; return renderAdmin(); }
+    case 'quitarIt': s.draft.dias[Number(t.dataset.d)].items.splice(Number(t.dataset.i),1); return renderAdmin();
+    case 'copiarLink': return copiar(document.getElementById('linkAl'), 'Link copiado');
+    case 'copiarMsg': return copiar(null, 'Mensaje copiado', mensajeAviso(S.alumnos[s.id], s.primera, s.cambio));
+    case 'bajaAlumno': { const a=clone(S.alumnos[s.id]); a.activo = a.activo===false; if(await guardarAlumno(s.id, a)){ toast(a.activo?'Alumno dado de alta':'Alumno dado de baja'); renderAdmin(); } return; }
+    case 'borrarAlumno': {
+      if(S.confirmDel!==s.id){ S.confirmDel=s.id; return renderAdmin(); }
+      const a=S.alumnos[s.id];
+      try{ await Data.del('alumnos', s.id); if(a.token) await Data.del('publico', a.token); delete S.alumnos[s.id]; S.screen=null; S.confirmDel=null; toast('Alumno borrado'); renderAdmin(); }catch(e){ toast('No se pudo borrar'); }
+      return;
+    }
+    case 'borrarPlantilla': {
+      if(S.confirmDel!==s.id){ S.confirmDel=s.id; return renderAdmin(); }
+      try{ await Data.del('plantillas', s.id); delete S.plantillas[s.id]; S.screen=null; S.confirmDel=null; S.tab='plantillas'; toast('Plantilla borrada'); renderAdmin(); }catch(e){ toast('No se pudo borrar'); }
+      return;
+    }
+    case 'fotoEj': return elegirArchivo({kind:'ejercicio'});
+    case 'quitarFotoEj': s.draft.fotoCambio=true; s.draft.fotoData=''; return renderAdmin();
+    case 'bajaEj': { const d=s.draft; const doc=docEj(d); doc.oculto=!d.oculto; if(await guardar('ejercicios', d.key, doc, doc.oculto?'Ejercicio dado de baja':'Ejercicio dado de alta')){ EXDOCS[d.key]=doc; refrescarLib(); d.oculto=doc.oculto; d.editado=true; renderAdmin(); } return; }
+    case 'borrarEj': case 'restaurarEj': {
+      const k=s.draft.key; if(S.confirmDel!==k){ S.confirmDel=k; return renderAdmin(); }
+      try{ await Data.del('ejercicios', k); await Data.del('fotos', k); delete EXDOCS[k]; delete FOTOS[k]; delete FOTO_PEND[k]; refrescarLib(); toast(act==='borrarEj'?'Ejercicio borrado':'Ejercicio restaurado'); S.tab='ejercicios'; ir(null); }catch(e){ toast('No se pudo completar'); }
+      return;
+    }
+  }
+}
+const docEj = d => ({nombre:String(d.nombre||'').trim(), grupo:d.grupo, tip:String(d.tip||'').trim(), video:String(d.video||'').trim(), tieneFoto: d.fotoCambio ? !!d.fotoData : !!d.tieneFoto, oculto:!!d.oculto});
+async function copiar(input, okMsg, texto){
+  const val = texto ?? input.value;
+  try{ await navigator.clipboard.writeText(val); toast(okMsg); }
+  catch(e){ if(input){ input.focus(); input.select(); } toast('Mantené apretado para copiar'); }
+}
+
+document.getElementById('fileIn').addEventListener('change', async ev => {
+  const f = ev.target.files && ev.target.files[0]; const tg = FILE_TARGET; FILE_TARGET = null;
+  if(!f || !tg) return;
+  try{
+    if(tg.kind==='perfil'){
+      const data = await comprimir(f, 360, 0.8);
+      const p = clone(AL.perfil); p.foto = data; await guardar('perfiles', AL.user.uid, p, 'Foto guardada');
+    } else if(tg.kind==='ejercicio'){
+      const data = await comprimir(f, 900, 0.72);
+      const s = S.screen; if(!s || s.type!=='editEj') return;
+      s.draft.fotoCambio = true; s.draft.fotoData = data; renderAdmin();
+    }
+  }catch(e){ toast('No se pudo usar esa imagen. Probá con otra.'); }
+});
+
+document.addEventListener('change', ev => {
+  if(ev.target.id==='exBajas'){ S.exBajas = ev.target.checked; renderAdmin(); }
+  const s = S.screen;
+  if(s && s.type==='editEj' && ev.target.dataset.x) s.draft[ev.target.dataset.x] = ev.target.value;
+});
+document.addEventListener('input', ev => {
+  const t = ev.target;
+  if(S.picker && t.id==='pq'){ S.picker.q = t.value; renderPickerGrid(); return; }
+  if(t.id==='q'){ S.q = t.value; document.getElementById('listaAl').innerHTML = listaAlumnosHTML(); return; }
+  if(t.id==='exq'){ S.exq = t.value; const g=document.getElementById('exGrid'); g.innerHTML = ejFiltrados(S.exBajas).map(e=>ejCard(e, `data-ej="${esc(e.key)}"`)).join(''); cargarFotos(g); return; }
+  const s = S.screen; if(!s) return;
+  if(s.type==='avisar' && t.id==='cambio'){ s.cambio = t.value; actualizarAviso(); return; }
+  if(s.type==='editEj' && t.dataset.x){ s.draft[t.dataset.x] = t.value; if(t.dataset.x==='video'){ document.getElementById('vidPrev').innerHTML = urlOk(t.value)?videoHTML(t.value):''; } return; }
+  if(s.type!=='editRutina') return;
+  if(t.dataset.r){ s.draft[t.dataset.r] = t.dataset.r==='semanas' ? (Number(t.value)||'') : t.value; return; }
+  if(t.dataset.dt!==undefined){ s.draft.dias[Number(t.dataset.dt)].titulo = t.value; return; }
+  if(t.dataset.f){ s.draft.dias[Number(t.dataset.d)].items[Number(t.dataset.i)][t.dataset.f] = t.value; }
+});
+
+document.addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const id = ev.target.id, s = S.screen;
+  if(id==='fLogin'){
+    const m=document.getElementById('lg-mail').value.trim(), pw=document.getElementById('lg-pass').value;
+    try{ if(AL.authModo==='crear') await auth.createUserWithEmailAndPassword(m, pw); else await auth.signInWithEmailAndPassword(m, pw); }
+    catch(e){ toast(errAuth(e.code)); }
+    return;
+  }
+  if(id==='fReg'){
+    const r = {fecha: document.getElementById('rg-fecha').value || today()};
+    let alguno = false;
+    CAMPOS.forEach(([c]) => { const v = num(document.getElementById('rg-'+c).value); r[c] = v==null ? '' : String(v); if(v!=null) alguno = true; });
+    if(!alguno){ toast('Completá al menos un dato'); return; }
+    const p = clone(AL.perfil); p.registros = (p.registros||[]).concat([r]).slice(-300);
+    await guardar('perfiles', AL.user.uid, p, 'Registro guardado');
+    return;
+  }
+  if(id==='fDatos'){
+    const p = clone(AL.perfil);
+    Object.assign(p, {nombre:document.getElementById('pd-nombre').value.trim(), nacimiento:document.getElementById('pd-nac').value, altura:document.getElementById('pd-alt').value.trim(), telefono:document.getElementById('pd-tel').value.trim(), emergencia:document.getElementById('pd-emer').value.trim(), molestias:document.getElementById('pd-mol').value.trim()});
+    await guardar('perfiles', AL.user.uid, p, 'Datos guardados');
+    return;
+  }
+  if(id==='fAl'){
+    const nombre = document.getElementById('al-nombre').value.trim(); if(!nombre) return;
+    const aid = s.id || nuevoId('a');
+    const a = s.id ? clone(S.alumnos[s.id]) : {historial:[], token:nuevoToken(nombre), activo:true, rutina:null, actualizada:null};
+    Object.assign(a, { nombre, telefono:document.getElementById('al-tel').value.trim(), objetivo:document.getElementById('al-obj').value.trim(), alta:document.getElementById('al-alta').value, observaciones:document.getElementById('al-obs').value.trim() });
+    if(await guardarAlumno(aid, a)){ toast('Guardado'); S.screen={type:'alumno', id:aid}; renderAdmin(); }
+    return;
+  }
+  if(id==='fEj'){
+    const d = s.draft; const doc = docEj(d);
+    if(!doc.nombre){ toast('Poné un nombre'); return; }
+    if(doc.video && !urlOk(doc.video)){ toast('El link del video tiene que empezar con https://'); return; }
+    const key = d.key || 'c:'+nuevoId('e');
+    try{
+      if(d.fotoCambio){ if(d.fotoData) await Data.set('fotos', key, {img:d.fotoData}); else await Data.del('fotos', key); FOTOS[key] = d.fotoData || null; FOTO_PEND[key] = Promise.resolve(FOTOS[key]); }
+      await Data.set('ejercicios', key, doc);
+      EXDOCS[key] = doc; refrescarLib(); toast('Ejercicio guardado'); S.screen=null; S.tab='ejercicios'; renderAdmin(); window.scrollTo(0,0);
+    }catch(e){ console.error(e); toast('No se pudo guardar. Si subiste una foto, probá con otra más liviana.'); }
+    return;
+  }
+  if(id==='fR'){
+    const r = clone(s.draft);
+    r.nombre = String(r.nombre||'').trim(); if(!r.nombre){ toast('Ponele nombre a la rutina'); return; }
+    r.semanas = Math.max(1, Number(r.semanas)||4);
+    r.dias = (r.dias||[]).map((d,i)=>({titulo:String(d.titulo||'').trim()||('Día '+(i+1)), items:d.items||[]}));
+    if(s.target==='plantilla'){
+      delete r.inicio;
+      const pid = s.id || nuevoId('p');
+      if(await guardar('plantillas', pid, r, 'Plantilla guardada')){ S.plantillas[pid]=r; S.screen=null; S.tab='plantillas'; renderAdmin(); window.scrollTo(0,0); }
+      return;
+    }
+    const a = clone(S.alumnos[s.id]); const primera = !a.rutina;
+    r.inicio = r.inicio || today();
+    a.historial = a.historial || [];
+    if(s.archivar && a.rutina){ a.historial.push(Object.assign(clone(a.rutina), {fin:r.inicio})); if(a.historial.length>30) a.historial = a.historial.slice(-30); }
+    a.rutina = r; a.actualizada = new Date().toISOString();
+    if(await guardarAlumno(s.id, a)){ toast('Rutina guardada'); S.screen={type:'avisar', id:s.id, primera, cambio:''}; renderAdmin(); window.scrollTo(0,0); }
+  }
+});
+
+/* ---------------- arranque ---------------- */
+refrescarLib();
+if(TOKEN) startAlumno();
+else if(DEMO) startAdmin();
+else startLogin();
+</script>
+</body>
+</html>
